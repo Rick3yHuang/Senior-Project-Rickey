@@ -1,0 +1,338 @@
+\documentclass{article}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with`a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packageshttps://www.overleaf.com/project/617db8234c85bd8404625de7
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage[dvipsnames]{xcolor}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+\usepackage{float}
+\usepackage[dvipsnames]{xcolor}
+
+\usepackage[
+backend=biber,
+style=alphabetic,
+sorting=ynt
+]{biblatex}
+
+\addbibresource{research.bib}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\theoremstyle{remark}
+\newtheorem*{remark}{\textbf{Remark}}
+
+\theoremstyle{example}
+\newtheorem{example}{\textbf{Example}}[section]
+
+\title{Computing Minimal Free Schreyer Resolution\\
+\begin{large} 
+  Senior Project
+\end{large}}
+\author{Ruiqi (Rickey) Huang}
+
+\newcommand{\qedwhite}{\hfill \ensuremath{\Box}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+    \textcolor{BrickRed}{waiting for editing}
+\end{abstract}
+
+\section{Introduction}
+
+\paragraph{  }
+
+\textcolor{BrickRed}{waiting for editing}
+
+\paragraph{  }
+
+\section{Preliminaries}
+
+\paragraph{  }
+
+We define the least common multiple monomials in the following way
+\begin{definition}[\textbf{Least Common Multiple}]
+    Let $f, g \in k[x_1, \cdots, x_n]$ be nonzero polynomials such that $multideg(f) = \alpha$ and $multideg(g) = \beta$, then let $\gamma = (\gamma_1, \cdots, \gamma_n)$, where $\gamma_i = max(\alpha_i,\beta_i)$. Then $x^{\gamma}$ is the least common multiple of $LM(f)$ and $LM(g)$. That is $x^{\gamma} = lcm(LM(f), LM(g))$.
+\end{definition}
+
+\paragraph{  }
+To cancel the leading terms of two polynomials, we need the help from the definition below.
+\begin{definition}[\textbf{S-polynomial}]
+    Let $f, g \in k[x_1, \cdots, x_n]$ be nonzero polynomials, and let $x^{\gamma} = lcm(LM(f), LM(g))$ then the S-polynomial of $f$ and $g$ is defined as a polynomial that cancels leading terms of both the polynomials. to be specific.
+    \begin{equation}
+        S(f,g) = \tfrac{x^{\gamma}}{LT(f)} \cdot f - \tfrac{x^{\gamma}}{LT(g)}\cdot g
+    \end{equation}
+\end{definition}
+
+\paragraph{  }
+We can easy see the cancellation of the leading terms simply via the following calculation:
+
+Let $f' = f - LT(f)$ and $g' = g - LT(g)$. Then:
+\begin{align}
+    \tfrac{x^{\gamma}}{LT(f)} \cdot f - \tfrac{x^{\gamma}}{LT(g)} \cdot g &= \tfrac{x^{\gamma}}{(LT(f) + f')} - \tfrac{x^{\gamma}}{(LT(g) + g')}\\
+    &= x^{\gamma} + \tfrac{x^{\gamma}}{LT(f)} \cdot f' - x^{\gamma} - \tfrac{x^{\gamma}}{LT(g)} \cdot g'\\
+    &= \tfrac{x^{\gamma}}{LT(f)} \cdot f' - \tfrac{x^{\gamma}}{LT(g)} \cdot g' 
+\end{align}
+
+Clearly, the S-polynomial's degree drops by canceling the leading terms.
+
+\begin{lemma}
+    For a sum $\sum_{i = 1}^{s}{p_i}$, where $multideg(p_i) = \delta \in Z_{\geq0}^{n}$ for all $i$, if $multideg(\sum_{i = i}^{s}{p_i}) < \delta$, then $\sum_{i = 1}^{s}{p_i}$ is a linear combination, with coefficients in $k$, of the S-polynomials $S(p_j, p_l)$ for $1 \leq j,l \leq s$. Furthermore, each $S(p_j, p_l)$ has multidegree $< \delta$.
+\end{lemma}
+
+\textcolor{BrickRed}{Maybe include the proof}
+
+Theorem 6 (Buchberger's Criterion):** Ideal Membership Problem
+    - Let $I$ be a polynomial ideal. Then a basis $G = \{g_1, \cdots, g_t\}$ of $I$ is a Gröbner basis of $I$ if and only if for all pairs $i \neq j$, the remainder on division of $S(g_i, g_j)$ by $G$ (listed in some order) is zero.
+        - This algorithm terminates because of the ACC ($LT(G') \subseteq LT(G)$)
+- **The Buchberger's Algorithm:**
+
+\begin{verbatim}
+    Input: F = (f_1, \cdots,f_s)
+    Output: a Gröbner basis G = (g_1, \cdots,g_t) for I, \ with F \subseteq G\\G := F\\REPEAT\\G' := G\\FOR \ each\ pair\{p,q\}, p \neq q \ in \ G'\ DO\\r := \overline{S(p,q)}^{G'}\\IF\ r\neq 0\ THEN \ G\ := G\cup\{r\}\\UNTIL\ G = G'\\RETURN \ G\\
+\end{verbatim}
+
+- The Buchberger's algorithm only produces a Gröbner Basis which is not unique, and it might include redundancy.
+- The **minimal Grobner basis** is the Gröbner basis without redundancy, but it is still not unique
+    - To produce a minimal Gröbner basis:
+        - adjusting constants to make all leading coefficients equal to 1
+        - removing any p with $LT(p) \in <LT(G\backslash\{p\})>$ from G
+- The **reduced Gröbner basis** is a Gröbner basis  $G$ for $I$ such that:
+    - $LC(p) = 1$ for all $p \in G$
+    - For all $p \in G$, no monomial of $p$ lies in $<LT(G\backslash\{p\})>$
+- The row reduction is a special case for buchberger's algorithm
+- Refinement of the Buchberger's Criterion
+    - A basis of an ideal I is a Gröbner basis if and only if all of its S-polynomials have standard representations.
+        - Standard Representation:
+            - $f = A_lg_l + \cdots + A_lg_l, A_i \in k[x_1, \cdots, x_n]$
+            - Whenever $A_ig_i \neq 0$, we have $multideg(f) \geq multideg(A_ig_i)$
+    - Given an finite set $G \subseteq k[x_1, \cdots, x_n]$, suppose that we have $f,g\in G$ such that the leading monomials of $f$ and $g$  are relatively prime. The $S(f,g) \rightarrow_{G} 0$.
+    - Don't check zero remainder coming from the division algorithm using the division algorithm. Instead, check the standard representation by checking whether the leading monomials are relatively prime.
+    
+
+\textcolor{BrickRed}{Just some notes taken when reading the book and the paper, need to be edited}
+
+\subsection{Gröbner Bases}
+
+\begin{definition}[\textbf{Gröbner Basis}]\cite{cox_grobner_2015}\label{def:gb}
+    Fix a monomial order on the polynomial ring $k[x_1, \cdots, x_n]$. A finite subset $G = \{g_1, \cdots, g_t\}$ of an ideal $I \subseteq k[x_1, \cdots, x_n]$ different from $\{0\}$ is said to be \textbf{Gröbner basis} (or \textbf{standard basis}) if
+    \begin{center}
+        $<LT(g_1), \cdots, LT(g_t)> = <LT(I)>$
+    \end{center}
+\end{definition}
+
+
+
+\begin{theorem}[\textbf{Hilbert Basis Theorem}]\cite{cox_grobner_2015}\label{thm:hb_thm}
+    Every ideal $I \subseteq k[x_1,\cdots,x_n]$ has a finite generating set. In the other words, $I = <g_1,\cdots,g_t>$, for some $g_1,\cdots,g_t \in I$.
+\end{theorem}
+
+Theorem \ref{thm:hb_thm} implies that every ideal $I \subseteq k[x_1, \cdots, x_n]$ has a finite generating set. In other words, $I = <g_1, \cdots, g_t>$ for some $g_1, \cdots, g_t \in I$. Thus, we have the following corollary.
+
+\begin{corollary}\cite{cox_grobner_2015}\label{cor:gbI}
+    Fix a monomial order on the polynomial ring $k[x_1,\cdots,x_n]$,every ideal in $k[x_1, \cdots, x_n]$ has a Gröbner basis. Additionally, any Gröbner basis for an ideal $I$ is a basis of $I$.
+\end{corollary}
+
+\subsection{Properties of Gröbner Bases}
+\begin{itemize}
+    \item $<LT(I)>$ is strictly larger than $<LT(g_1), \cdots, LT(g_s)>$
+    \item Dividing $f$ by a Gröbner basis ($G = \{g_1, g_2, \cdots, g_t\}$), the remainder would be unique, but the quotient $q$ would be different if the generators of $G$ are list in a different order.
+    \item $f \in I$ if and only if $0$ is a remainder of $f$ on division by $G$
+    \item $\overline{f}^{F}$ is the remainder on division of $f$ by the ordered s-tuple $F = (f_1, f_2, \cdots, f_s)$
+\end{itemize}
+
+\begin{remark}
+    An obstruction to a basis be a Gröbner basis is that the cancellation occur in $f_k = ax^{\alpha}f_i - bx^{\beta}f_{j}$, where $f_i,f_j \in I$, and $f_k \in$ <LT($I$)>, but $f_k \notin$ <LT($f_i$), LT($f_j$)>.
+\end{remark}
+
+
+\paragraph{  }
+Preliminaries
+
+- a power product (or monomial of S): $t = x_1^{\alpha_1}\cdots x_n^{\alpha_n} \in S$, where $\alpha_1, \cdots, \alpha_n$ are non-negative integers
+- for any set $G \subseteq S$, we let $in(G)$ denote the $K$-vector space spanned by the monomials $\{lm(f):f \in G\}$.
+- If $J \subset S$ is an ideal, then $in(J) \subset S$ is the monomial ideal generated by the lead terms of $J$
+- Let $R = S/J$ be a factor ring of $S$. Let $N$ denotes the $K$-vector space spanned by the set of standard monomials of $R$, that is, the set of monomials of $S$ not in $in(J)$. Any element $f \in R$ may be uniquely written as the image of an element $g \in N$, and we set $lc(f) = lc(g)$ and $lm(f) = lm(g) \in N$.
+- For any set $G \subset R$, let $in(G)$ denote the $K$-vectors space generated by the lead monomials $\{lm(f):f\in G\}$. Thus, $N = in(R)$, and $in(S) = N \bigoplus in(J)$, as $K$-vector spaces.
+- Let $F$ be a free module over $R$, and let $\hat{F}$ be the free $S$-module with the same rank as $F$ and corresponding basis. A **monomial** of $F$ is by definition any element $m = t \cdot e$, where $t \in N$ is a standard monomial and $e$ is any element of the canonical basis of $\hat{F}$.
+- **Term order on** $F$ (a total order on the monomials of $F$) such that:
+    - if $m <_F n$, then $t\cdot m <_F t \cdot n$;
+    - if $s <_S t$, then $s\cdot e <_F t \cdot e$;
+- for all $m, n$ monomials of $F$, $s,t$ power products in $S$, and $e$ any basis element of $F$.
+- $\{g_1, \cdots, g_s\} \subset I\subset F$ is a Gröbner basis of the $R$-module I, if $\{lm(g_1), \cdots, lm(g_s)\}$ generates $in(I)$, that is, every monomial in $in(I)$ is divisible by some $lm(g_i)$.
+- auto-reduced Gröbner basis: every lead monomial $lm(g_i)$ divides no monomial occuring in ang $g_j$ other than itself
+- irredundant Gröbner basis: $in(I)$ is minimally generated by $\{lm(g_1), \cdots, lm(g_s)\}$, which in turn means that this set generates $in(I)$, and no lead term $lm(g_i)$ divides any $lm(g_j)$ for $j \neq i$
+
+The Schreyer Resolution and Its Frame
+
+Algorithm 4.2: Resolution[$\bar{{\mathcal{C}}_1}$]
+
+${\mathcal{C}}_i,{\mathcal{H}}_i := \emptyset \;(1 \leq i \leq l)$
+
+while $\mathcal{B} \neq \emptyset$ do
+
+$m := min \mathcal{B}$
+
+$\mathcal{B} := \mathcal{B} \backslash \{m\}$
+
+$i:= lev(m)$
+
+if $i = 1$ then
+
+$g :=$  the element of $\bar{{\mathcal{C}}_i}$ s.t. $lm(g) = m$
+
+${\mathcal{C}}_1 := {\mathcal{C}}_1 \cup \{g\}$
+
+${\mathcal{H}}_1 := {\mathcal{H}}_i \cup \{g\}$
+
+else
+
+$(f,g) := Reduce[m,{\mathcal{C}}_{i-1}]$
+
+${\mathcal{C}}_i := {\mathcal{C}}_i \cup \{g\}$
+
+if $f \neq 0$ then 
+
+${\mathcal{C}}_{i-1} := {\mathcal{C}}_{i-1} \cup \{f\}$
+
+$\mathcal{B} := \mathcal{B} \backslash \{lm(f)\}$  removing one S-polynomial for free!!
+
+else
+
+${\mathcal{H}}_i := {\mathcal{H}}_i \cup \{g\}$
+
+return ${\mathcal{C}}_i, {\mathcal{H}}_i \; (1\leq i \leq l)$
+
+\begin{lemma}\label{lem:mingens}
+    $in(ker\xi_i)$ is minimally generated by
+    \begin{equation}
+        \bigcup_{e\in{\varepsilon}_{i-1}}{\bigcup_{j = 2}^{r}{mingens((in(J),t1,\cdots,t_{j-1}):t_j)\cdot \epsilon_j}}
+    \end{equation}
+    where $\varepsilon_i(e) = \{\epsilon_1,\cdots,\epsilon_r\}$
+    \textcolor{BrickRed}{edit more}
+\end{lemma}
+
+\begin{example}
+    Let $K$ be a field of any characteristic and let the polynomial ring $S = K[x_1,\cdots,x_6]$ with the term order of \verb+DegRevLex+. Consider the graded module $M = S/I$, for 
+    \begin{equation}
+        I = <x_4x_5,x_3x_6,x_1x_2,x_5x_6,x_1x_3,x_2x_5,x_2x_4x_6,x_1x_4x_6,x_2x_3x_4>
+    \end{equation} 
+    Using the algorithm \verb+Rsolution+ for $char(K) \neq 2$ to the module $M$, find the minimal Schreyer resolution.
+\end{example}
+
+\paragraph{  }
+
+\textbf{Solution:} We first want to compute the Schreyer frame $\Xi$ for $M$. Starting from this angle, the basis of the first level of the Schreyer frame is $I$, because it generates the kernel of the map $F_0 \rightarrow M$. Hence, we have 
+\begin{equation}
+    \mathcal{B}_1 = \{x_4x_5,x_3x_6,x_1x_2,x_5x_6,x_1x_3,x_2x_5,x_2x_4x_6,x_1x_4x_6,x_2x_3x_4\}
+\end{equation}
+After ordering it using the \verb+DegRevLex+, the first level basis is:
+\begin{equation}
+    \mathcal{B}_1 = \{x_5x_6,x_3x_6,x_4x_5,x_2x_5,x_1x_3,x_1x_2,x_2x_3x_4,x_1x_4x_6,x_2x_4x_6\}
+\end{equation}
+Then, we used the formula in the Lemma \ref{lem:mingens}, to construct the basis of the next level by finding the monomials that knock a basis into the ideal once at a time.
+\begin{align}
+    j &= 2: (x_5x_6:x_3x_6) = \{x_5\} \rightarrow \{x_5e_{1,2}\}\\
+    j &= 3: ((e_{1,1},e_{1,2}):x_4x_5) = \{x_6,x_3x_6\} = \{x_6\} \rightarrow \{x_6e_{1,3}\}\\
+    j &= 4: ((e_{1,1},\cdots,e_{1,3}):x_2x_5) = \{x_6,x_3x_6,x_4\} = \{x_6,x_4\} \rightarrow \{x_6e_{1,4},x_4e_{1,4}\}\\
+    j &= 5: ((e_{1,1},\cdots,e_{1,4}):x_1x_3) = \{x_5x_6,x_6,x_4x_5,x_2x_5\} = \{x_6,x_4x_5,x_2x_5\}\\
+    &\rightarrow \{x_6e_{1,5},x_4x_5e_{1,5},x_2x_5e_{1,5}\}\\
+    j &= 6: ((e_{1,1},\cdots,e_{1,5}):x_1x_2) = \{x_5x_6,x_3x_6,x_4x_5,x_5,x_3\} = \{x_5,x_3\}\rightarrow \{x_5e_{1,6},x_3e_{1,6}\}\\
+    j &= 7: ((e_{1,1},\cdots,e_{1,6}):x_2x_3x_4) = \{x_5x_6,x_6,x_5,x_5,x_1,x_1\} = \{x_6,x_5,x_1\}\\
+    &\rightarrow \{x_6e_{1,7},x_5e_{1,7},x_1e_{1,7}\}\\
+    j &= 8: ((e_{1,1},\cdots,e_{1,7}):x_1x_4x_6) = \{x_5,x_3,x_5,x_2x_5,x_3,x_2,x_2x_3\} = \{x_5,x_3,x_2\}\\
+    &\rightarrow \{x_5e_{1,8},x_3e_{1,8},x_2e_{1,8}\}\\
+    j &= 9: ((e_{1,1},\cdots,e_{1,8}):x_2x_4x_6) = \{x_5,x_3,x_5,x_5,x_1x_3,x_1,x_3,x_1\} = \{x_5,x_3,x_1\}\\
+    &\rightarrow \{x_5e_{1,9},x_3e_{1,9},x_1e_{1,9}\}
+\end{align}
+Therefore ,we have our second level basis of $\Xi$:
+\begin{equation}
+    \begin{aligned}
+        \mathcal{B}_2 = &\{x_5e_{1,2},x_6e_{1,3},x_6e_{1,4},x_4e_{1,4},x_6e_{1,5},x_4x_5e_{1,5},x_2x_5e_{1,5},x_5e_{1,6},x_3e_{1,6},x_6e_{1,7},x_5e_{1,7},x_1e_{1,7},\\
+        &x_5e_{1,8},x_3e_{1,8},x_2e_{1,8},x_5e_{1,9},x_3e_{1,9},x_1e_{1,9}\}
+    \end{aligned}
+\end{equation}
+After ordering it using the \verb+DegRevLex+, the second level basis is:
+\begin{equation}
+    \begin{aligned}
+        \mathcal{B}_2 = &\{x_6e_{1,3},x_5e_{1,2},x_6e_{1,4},x_6e_{1,5},x_4e_{1,4},x_5e_{1,6},x_3e_{1,6},x_5e_{1,9},x_5e_{1,8},x_6e_{1,7},x_3e_{1,9},x_3e_{1,8},x_2e_{1,8},\\
+        &x_1e_{1,9},x_5e_{1,7},x_4x_5e_{1,5},x_2x_5e_{1,5},x_1e_{1,7}\}
+    \end{aligned}
+\end{equation}
+Applying the Lemma \ref{lem:mingens} we have
+\begin{align}
+    e_{1,4}: j &= 2: (x_6,x_4) = \{x_6\} \rightarrow\{x_6e_{2,5}\}\\
+    e_{1,5}: j &= 2: (x_6,x_4x_5) = \{x_6\} \rightarrow\{x_6e_{2,16}\}\\
+    e_{1,5}: j &= 3: ((x_6,x_4x_5):x_2x_5) = \{x_6,x_4\} \rightarrow\{x_6e_{2,17},x_4e_{2,17}\}\\
+    e_{1,6}: j &= 2: (x_5,x_3) = \{x_5\} \rightarrow\{x_5e_{2,7}\}\\
+    e_{1,7}: j &= 2: (x_6,x_5) = \{x_6\} \rightarrow\{x_6e_{2,15}\}\\
+    e_{1,7}: j &= 3: ((x_6,x_5):x_1) = \{x_6,x_5\} \rightarrow\{x_6e_{2,18},x_5e_{2,18}\}\\
+    e_{1,8}: j &= 2: (x_5,x_3) = \{x_5\} \rightarrow\{x_5e_{2,12}\}\\
+    e_{1,8}: j &= 3: ((x_5,x_3):x_2) = \{x_5,x_3\} \rightarrow\{x_5e_{2,13},x_3e_{2,13}\}\\
+    e_{1,9}: j &= 2: (x_5,x_3) = \{x_5\} \rightarrow\{x_5e_{2,11}\}\\
+    e_{1,9}: j &= 3: ((x_5,x_3):x_1) = \{x_5,x_3\} \rightarrow\{x_5e_{2,14},x_3e_{2,14}\}
+\end{align}
+
+Then, we have the third level basis $\mathcal{B}_3$ of $\Xi$:
+
+\begin{equation}
+    \begin{aligned}
+        \mathcal{B}_3 = &\{x_6e_{2,5},x_6e_{2,16},x_6e_{2,17},x_4e_{2,17},x_5e_{2,7},x_6e_{2,15},x_6e_{2,18},x_5e_{2,18},x_5e_{2,12},x_5e_{2,13},x_3e_{2,13},\\
+        &x_5e_{2,11},x_5e_{2,14},x_3e_{2,14}\}
+    \end{aligned}
+\end{equation}
+After ordering it using the \verb+DegRevLex+, the third level basis is:
+\begin{equation}
+    \begin{aligned}
+        \mathcal{B}_3 = &\{x_6e_{2,5},x_5e_{2,7},x_5e_{2,11},x_6e_{2,15},x_5e_{2,12},x_6e_{2,16},x_5,e_{2,13},x_5e_{2,14},x_6e_{2,17},x_3e_{2,13},x_3e_{2,14},\\
+        & x_6e_{2,18},x_4e_{2,17},x_5e_{2,18}\}
+    \end{aligned}
+\end{equation}
+
+Applying the Lemma \ref{lem:mingens} once again, we find the following bases:
+\begin{align}
+    e_{2,17}: j &= 2: (x_6,x_4) = \{x_6\} \rightarrow\{x_6e_{3,13}\}\\
+    e_{2,18}: j &= 2: (x_6,x_5) = \{x_6\} \rightarrow\{x_6e_{3,14}\}\\
+    e_{2,13}: j &= 2: (x_5,x_3) = \{x_5\} \rightarrow\{x_5e_{3,10}\}\\
+    e_{2,14}: j &= 2: (x_5,x_3) = \{x_5\} \rightarrow\{x_5e_{3,11}\}
+\end{align}
+
+The fourth level basis $\mathcal{B}_4$ of $\Xi$ is
+
+\begin{equation}
+    \begin{aligned}
+        \mathcal{B}_4 = &\{x_6e_{3.13},x_6e_{3.14},x_5e_{3,10},x_5e_{3,11}\}
+    \end{aligned}
+\end{equation}
+After ordering it using the \verb+DegRevLex+, the last level basis is:
+\begin{equation}
+    \begin{aligned}
+        \mathcal{B}_4 = &\{x_5e_{3,10},x_5e_{3,11},x_6e_{3,13},x_6e_{3,14}\}
+    \end{aligned}
+\end{equation}
+
+\section{Conclusion}
+
+\paragraph{  }
+
+\textcolor{BrickRed}{waiting for editing}
+
+\newpage
+\printbibliography
+
+\end{document}
