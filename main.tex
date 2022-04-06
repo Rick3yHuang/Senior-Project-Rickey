@@ -20,12 +20,16 @@
 \newtheorem{lemma}[theorem]{Lemma}
 \usepackage{float}
 \usepackage[dvipsnames]{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 
 \usepackage[
 backend=biber,
 style=alphabetic,
 sorting=ynt
 ]{biblatex}
+
+\usepackage{alltt}
 
 \addbibresource{research.bib}
 
@@ -95,37 +99,58 @@ Clearly, the S-polynomial's degree drops by canceling the leading terms.
     For a sum $\sum_{i = 1}^{s}{p_i}$, where $multideg(p_i) = \delta \in Z_{\geq0}^{n}$ for all $i$, if $multideg(\sum_{i = i}^{s}{p_i}) < \delta$, then $\sum_{i = 1}^{s}{p_i}$ is a linear combination, with coefficients in $k$, of the S-polynomials $S(p_j, p_l)$ for $1 \leq j,l \leq s$. Furthermore, each $S(p_j, p_l)$ has multidegree $< \delta$.
 \end{lemma}
 
-\textcolor{BrickRed}{Maybe include the proof}
+\textcolor{BrickRed}{include the proof later}
 
-Theorem 6 (Buchberger's Criterion):** Ideal Membership Problem
-    - Let $I$ be a polynomial ideal. Then a basis $G = \{g_1, \cdots, g_t\}$ of $I$ is a Gröbner basis of $I$ if and only if for all pairs $i \neq j$, the remainder on division of $S(g_i, g_j)$ by $G$ (listed in some order) is zero.
-        - This algorithm terminates because of the ACC ($LT(G') \subseteq LT(G)$)
-- **The Buchberger's Algorithm:**
+\begin{theorem}[\textbf{Buchberger's Criterion}]
+    Let $I = <f_1,\cdots,f_s>\neq \{0\}$ be a polynomial ideal. Then a Gröbner basis for I can be constructed in a finite number of steps by the following algorithm:
+    \begin{algorithm}[H]
+        \caption{Buchberger's Criterion}\label{alg:bc}
+        \begin{alltt}
+        Input: F = \((f\sb{1},\cdots,f\sb{s})\)
+        Output: a Gröbner basis \(G=(g\sb{1},\cdots,g\sb{t})\) for \(I\), with \(F \subseteq G\)
+        
+        \(G:=F\)
+        REPEAT
+        \quad \quad \quad \(G':=G\)
+        \quad \quad \quad FOR each pair\(\{p,q\}, p \neq q\) in \(G'\) DO
+        \quad \quad \quad \quad \quad \quad \(r := {\overline{S(p,q)}}\sp{G'}\)
+        \quad \quad \quad \quad \quad \quad IF \(r\neq 0\) THEN \(G\:=G\cup\{r\}\)
+        UNTIL \(G=G'\)
+        RETURN \(G\)
+    \end{alltt}
+    \end{algorithm}
+\end{theorem}
 
-\begin{verbatim}
-    Input: F = (f_1, \cdots,f_s)
-    Output: a Gröbner basis G = (g_1, \cdots,g_t) for I, \ with F \subseteq G\\G := F\\REPEAT\\G' := G\\FOR \ each\ pair\{p,q\}, p \neq q \ in \ G'\ DO\\r := \overline{S(p,q)}^{G'}\\IF\ r\neq 0\ THEN \ G\ := G\cup\{r\}\\UNTIL\ G = G'\\RETURN \ G\\
-\end{verbatim}
+\begin{proof}
+\begin{enumerate}
+    \item Let $I$ be a polynomial ideal. Then a basis $G = \{g_1, \cdots, g_t\}$ of $I$ is a Gröbner basis of $I$ if and only if for all pairs $i \neq j$, the remainder on division of $S(g_i, g_j)$ by $G$ (listed in some order) is zero.
+    \item This algorithm terminates because of the ACC ($LT(G') \subseteq LT(G)$)
+\end{enumerate}
+\end{proof}
 
-- The Buchberger's algorithm only produces a Gröbner Basis which is not unique, and it might include redundancy.
-- The **minimal Grobner basis** is the Gröbner basis without redundancy, but it is still not unique
-    - To produce a minimal Gröbner basis:
-        - adjusting constants to make all leading coefficients equal to 1
-        - removing any p with $LT(p) \in <LT(G\backslash\{p\})>$ from G
-- The **reduced Gröbner basis** is a Gröbner basis  $G$ for $I$ such that:
-    - $LC(p) = 1$ for all $p \in G$
-    - For all $p \in G$, no monomial of $p$ lies in $<LT(G\backslash\{p\})>$
-- The row reduction is a special case for buchberger's algorithm
-- Refinement of the Buchberger's Criterion
-    - A basis of an ideal I is a Gröbner basis if and only if all of its S-polynomials have standard representations.
-        - Standard Representation:
-            - $f = A_lg_l + \cdots + A_lg_l, A_i \in k[x_1, \cdots, x_n]$
-            - Whenever $A_ig_i \neq 0$, we have $multideg(f) \geq multideg(A_ig_i)$
-    - Given an finite set $G \subseteq k[x_1, \cdots, x_n]$, suppose that we have $f,g\in G$ such that the leading monomials of $f$ and $g$  are relatively prime. The $S(f,g) \rightarrow_{G} 0$.
-    - Don't check zero remainder coming from the division algorithm using the division algorithm. Instead, check the standard representation by checking whether the leading monomials are relatively prime.
-    
+\begin{remark}
+    The Buchberger's algorithm only produces a Gröbner Basis which is not unique, and it might include redundancy.
+\end{remark}
 
-\textcolor{BrickRed}{Just some notes taken when reading the book and the paper, need to be edited}
+\begin{definition}[\textbf{Minimal Gröbner Basis}]
+    The minimal Gröbner basis is a Gröbner basis  $G$ for $I$ such that:
+    \begin{itemize}
+        \item $LC(p) = 1$ for all $p \in G$
+        \item For all $p \in G$, none of $LT(p)$ lies in $<LT(G\backslash\{p\})>$
+    \end{itemize}
+\end{definition}
+
+\begin{definition}[\textbf{Reduced Gröbner Basis}]
+    The reduced Gröbner basis is a Gröbner basis  $G$ for $I$ such that:
+    \begin{itemize}
+        \item $LC(p) = 1$ for all $p \in G$
+        \item For all $p \in G$, none of $LT(p)$ lies in $<LT(G\backslash\{p\})>$
+    \end{itemize}
+\end{definition}
+
+\begin{remark}
+    The row reduction is a special case for buchberger's algorithm
+\end{remark}
 
 \subsection{Gröbner Bases}
 
@@ -157,12 +182,8 @@ Theorem \ref{thm:hb_thm} implies that every ideal $I \subseteq k[x_1, \cdots, x_
 \end{itemize}
 
 \begin{remark}
-    An obstruction to a basis be a Gröbner basis is that the cancellation occur in $f_k = ax^{\alpha}f_i - bx^{\beta}f_{j}$, where $f_i,f_j \in I$, and $f_k \in$ <LT($I$)>, but $f_k \notin$ <LT($f_i$), LT($f_j$)>.
+    An obstruction to a basis be a Gröbner basis is that the cancellation occur in $f_k = ax^{\alpha}f_i - bx^{\beta}f_{j}$, where $f_i,f_j \in I$, and $f_k \in <LT(I)>$, but $f_k \notin <LT(f_i), LT(f_j)>$.
 \end{remark}
-
-
-\paragraph{  }
-Preliminaries
 
 - a power product (or monomial of S): $t = x_1^{\alpha_1}\cdots x_n^{\alpha_n} \in S$, where $\alpha_1, \cdots, \alpha_n$ are non-negative integers
 - for any set $G \subseteq S$, we let $in(G)$ denote the $K$-vector space spanned by the monomials $\{lm(f):f \in G\}$.
@@ -178,45 +199,56 @@ Preliminaries
 - auto-reduced Gröbner basis: every lead monomial $lm(g_i)$ divides no monomial occuring in ang $g_j$ other than itself
 - irredundant Gröbner basis: $in(I)$ is minimally generated by $\{lm(g_1), \cdots, lm(g_s)\}$, which in turn means that this set generates $in(I)$, and no lead term $lm(g_i)$ divides any $lm(g_j)$ for $j \neq i$
 
-The Schreyer Resolution and Its Frame
+\section{Schreyer Frame and Schreyer Resolution}
 
-Algorithm 4.2: Resolution[$\bar{{\mathcal{C}}_1}$]
+\begin{algorithm}[H]
+\caption{Resolution}\label{alg:res}
+    \begin{alltt}
+        Input: an irredundant Gröbner basis \(\bar{{\mathcal{C}}\sb{1}}\) of \(I\), 
+        and an ordered union \(\mathcal{B}\) of bases of all levels
+        Output: the set of Gröbner bases \(\mathcal{C}\sb{1},\cdots,\mathcal{C}\sb{l}\),
+        and the set of corresponding syzygies \(\mathcal{H}\sb{1},\cdots,\mathcal{H}\sb{l}\)
+        
+        Resolution\([\bar{{\mathcal{C}}\sb{1}}]\)
+        \({\mathcal{C}}\sb{i},{\mathcal{H}}\sb{i}:=\emptyset (1\leq i\leq l)\)
+        while \(\mathcal{B}\neq\emptyset\) do
+        \quad \quad \(m:=min\mathcal{B}\)
+        \quad \quad \(\mathcal{B}:=\mathcal{B}\backslash\{m\}\)
+        \quad \quad \(i:=lev(m)\)
+        \quad \quad if \(i=1\) then
+        \quad \quad \quad \quad \(g:=\) the element of \(\bar{{\mathcal{C}}\sb{i}}\) s.t. \(lm(g)=m\)
+        \quad \quad \quad \quad \({\mathcal{C}}\sb{1}:={\mathcal{C}}\sb{1}\cup\{g\}\)
+        \quad \quad \quad \quad \({\mathcal{H}}\sb{1}:={\mathcal{H}}\sb{i}\cup\{g\}\)
+        \quad \quad else
+        \quad \quad \quad \quad \((f,g):=\)Reduce\([m,{\mathcal{C}}\sb{i-1}]\)
+        \quad \quad \quad \quad \({\mathcal{C}}\sb{i}:={\mathcal{C}}\sb{i}\cup\{g\}\)
+        \quad \quad \quad \quad if \(f\neq 0\) then
+        \quad \quad \quad \quad \quad \quad \({\mathcal{C}}\sb{i-1}:={\mathcal{C}}\sb{i-1}\cup\{f\}\)
+        \quad \quad \quad \quad \quad \quad \(\mathcal{B}:=\mathcal{B}\backslash\{lm(f)\}\)
+        \quad \quad \quad \quad else
+        \quad \quad \quad \quad \quad \quad\({\mathcal{H}}\sb{i}:={\mathcal{H}}\sb{i}\cup\{g\}\)
+        return \({\mathcal{C}}\sb{i},{\mathcal{H}}\sb{i}(1\leq i\leq l)\)
+\end{alltt}
+\end{algorithm}
 
-${\mathcal{C}}_i,{\mathcal{H}}_i := \emptyset \;(1 \leq i \leq l)$
+The Algorithm \verb+Reduce+ in \verb+Resolution+ is elaborated in the Algorithm \ref{alg:red}.
 
-while $\mathcal{B} \neq \emptyset$ do
-
-$m := min \mathcal{B}$
-
-$\mathcal{B} := \mathcal{B} \backslash \{m\}$
-
-$i:= lev(m)$
-
-if $i = 1$ then
-
-$g :=$  the element of $\bar{{\mathcal{C}}_i}$ s.t. $lm(g) = m$
-
-${\mathcal{C}}_1 := {\mathcal{C}}_1 \cup \{g\}$
-
-${\mathcal{H}}_1 := {\mathcal{H}}_i \cup \{g\}$
-
-else
-
-$(f,g) := Reduce[m,{\mathcal{C}}_{i-1}]$
-
-${\mathcal{C}}_i := {\mathcal{C}}_i \cup \{g\}$
-
-if $f \neq 0$ then 
-
-${\mathcal{C}}_{i-1} := {\mathcal{C}}_{i-1} \cup \{f\}$
-
-$\mathcal{B} := \mathcal{B} \backslash \{lm(f)\}$  removing one S-polynomial for free!!
-
-else
-
-${\mathcal{H}}_i := {\mathcal{H}}_i \cup \{g\}$
-
-return ${\mathcal{C}}_i, {\mathcal{H}}_i \; (1\leq i \leq l)$
+\begin{algorithm}
+\caption{Reduce[$t\cdot \epsilon,\mathcal{C}_{i-1}]$}\label{alg:red}
+    \begin{algorithmic}
+    \State $f:=t\cdot k$, where $\varphi_{i-1}(\epsilon) = k$
+    \State $g:=t\cdot \epsilon$
+    \While{$f \neq 0$ and $lm(f) \in in\langle\mathcal{C}_{i-1}\rangle$}
+        \State choose  $h \in \mathcal{C}_{i-1}$ s.t. $lm(h)\vert lm(f)$  \textbf{($h \neq f$ at the first itration)}
+        \State $f := f - \tfrac{lc(f)lpp(f)}{lc(h)lpp(h)}h$
+        \State $g := g - \tfrac{lc(f)lpp(f)}{lc(h)lpp(h)}e$, where $\varphi_{i-1}(e) = h$
+    \EndWhile
+    \If{$f \neq 0$}
+        \State $g := g - e$, where $\varphi_{i-1}(e) = f$
+    \EndIf
+    \State return $f,g$
+    \end{algorithmic}
+\end{algorithm}
 
 \begin{lemma}\label{lem:mingens}
     $in(ker\xi_i)$ is minimally generated by
@@ -230,7 +262,7 @@ return ${\mathcal{C}}_i, {\mathcal{H}}_i \; (1\leq i \leq l)$
 \begin{example}
     Let $K$ be a field of any characteristic and let the polynomial ring $S = K[x_1,\cdots,x_6]$ with the term order of \verb+DegRevLex+. Consider the graded module $M = S/I$, for 
     \begin{equation}
-        I = <x_4x_5,x_3x_6,x_1x_2,x_5x_6,x_1x_3,x_2x_5,x_2x_4x_6,x_1x_4x_6,x_2x_3x_4>
+        I = <x_2x_3,x_2x_4,x_5x_6,x_1x_2,x_4x_6,x_2x_5,x_1x_3x_5,x_1x_3x_6,x_3x_4x_5>
     \end{equation} 
     Using the algorithm \verb+Rsolution+ for $char(K) \neq 2$ to the module $M$, find the minimal Schreyer resolution.
 \end{example}
@@ -239,93 +271,135 @@ return ${\mathcal{C}}_i, {\mathcal{H}}_i \; (1\leq i \leq l)$
 
 \textbf{Solution:} We first want to compute the Schreyer frame $\Xi$ for $M$. Starting from this angle, the basis of the first level of the Schreyer frame is $I$, because it generates the kernel of the map $F_0 \rightarrow M$. Hence, we have 
 \begin{equation}
-    \mathcal{B}_1 = \{x_4x_5,x_3x_6,x_1x_2,x_5x_6,x_1x_3,x_2x_5,x_2x_4x_6,x_1x_4x_6,x_2x_3x_4\}
+    \mathcal{B}_1 = \{x_2x_3,x_2x_4,x_5x_6,x_1x_2,x_4x_6,x_2x_5,x_1x_3x_5,x_1x_3x_6,x_3x_4x_5\}
 \end{equation}
 After ordering it using the \verb+DegRevLex+, the first level basis is:
 \begin{equation}
-    \mathcal{B}_1 = \{x_5x_6,x_3x_6,x_4x_5,x_2x_5,x_1x_3,x_1x_2,x_2x_3x_4,x_1x_4x_6,x_2x_4x_6\}
+    \mathcal{B}_1 = \{x_5x_6,x_4x_6,x_2x_5,x_1x_4,x_2x_3,x_1x_2,x_1x_3x_6,x_3x_4x_5,x_1x_3x_5\}
 \end{equation}
 Then, we used the formula in the Lemma \ref{lem:mingens}, to construct the basis of the next level by finding the monomials that knock a basis into the ideal once at a time.
 \begin{align}
-    j &= 2: (x_5x_6:x_3x_6) = \{x_5\} \rightarrow \{x_5e_{1,2}\}\\
-    j &= 3: ((e_{1,1},e_{1,2}):x_4x_5) = \{x_6,x_3x_6\} = \{x_6\} \rightarrow \{x_6e_{1,3}\}\\
-    j &= 4: ((e_{1,1},\cdots,e_{1,3}):x_2x_5) = \{x_6,x_3x_6,x_4\} = \{x_6,x_4\} \rightarrow \{x_6e_{1,4},x_4e_{1,4}\}\\
-    j &= 5: ((e_{1,1},\cdots,e_{1,4}):x_1x_3) = \{x_5x_6,x_6,x_4x_5,x_2x_5\} = \{x_6,x_4x_5,x_2x_5\}\\
-    &\rightarrow \{x_6e_{1,5},x_4x_5e_{1,5},x_2x_5e_{1,5}\}\\
-    j &= 6: ((e_{1,1},\cdots,e_{1,5}):x_1x_2) = \{x_5x_6,x_3x_6,x_4x_5,x_5,x_3\} = \{x_5,x_3\}\rightarrow \{x_5e_{1,6},x_3e_{1,6}\}\\
-    j &= 7: ((e_{1,1},\cdots,e_{1,6}):x_2x_3x_4) = \{x_5x_6,x_6,x_5,x_5,x_1,x_1\} = \{x_6,x_5,x_1\}\\
-    &\rightarrow \{x_6e_{1,7},x_5e_{1,7},x_1e_{1,7}\}\\
-    j &= 8: ((e_{1,1},\cdots,e_{1,7}):x_1x_4x_6) = \{x_5,x_3,x_5,x_2x_5,x_3,x_2,x_2x_3\} = \{x_5,x_3,x_2\}\\
-    &\rightarrow \{x_5e_{1,8},x_3e_{1,8},x_2e_{1,8}\}\\
-    j &= 9: ((e_{1,1},\cdots,e_{1,8}):x_2x_4x_6) = \{x_5,x_3,x_5,x_5,x_1x_3,x_1,x_3,x_1\} = \{x_5,x_3,x_1\}\\
-    &\rightarrow \{x_5e_{1,9},x_3e_{1,9},x_1e_{1,9}\}
+    j &= 2: (x_5x_6:x_4x_6) = \{x_5\} \rightarrow \{x_5e_{1,2}\}\\
+    j &= 3: ((e_{1,1},e_{1,2}):x_2x_5) = \{x_6,x_4x_6\} = \{x_6\} \rightarrow \{x_6e_{1,3}\}\\
+    j &= 4: ((e_{1,1},\cdots,e_{1,3}):x_1x_4) = \{x_5x_6,x_6,x_2x_5\} = \{x_6,x_2x_5\} \rightarrow \{x_6e_{1,4},x_2x_5e_{1,4}\}\\
+    j &= 5: ((e_{1,1},\cdots,e_{1,4}):x_2x_3) = \{x_5x_6,x_4x_6,x_5,x_1x_4\} = \{x_5,x_4x_6,x_1x_4\}\\
+    &\rightarrow \{x_5e_{1,5},x_4x_6e_{1,5},x_1x_4e_{1,5}\}\\
+    j &= 6: ((e_{1,1},\cdots,e_{1,5}):x_1x_2) = \{x_5x_6,x_4x_6,x_5,x_4,x_3\} = \{x_5,x_4,x_3\}\\
+    &\rightarrow \{x_5e_{1,6},x_4e_{1,6},x_3e_{1,6}\}\\
+    j &= 7: ((e_{1,1},\cdots,e_{1,6}):x_1x_3x_6) = \{x_5,x_4,x_2x_5,x_4,x_2,x_2\} = \{x_5,x_4,x_2\}\\
+    &\rightarrow \{x_5e_{1,7},x_4e_{1,7},x_2e_{1,7}\}\\
+    j &= 8: ((e_{1,1},\cdots,e_{1,7}):x_3x_4x_5) = \{x_6,x_6,x_2,x_1,x_2,x_1x_2,x_1x_6\} = \{x_6,x_2,x_1\}\\
+    &\rightarrow \{x_6e_{1,8},x_2e_{1,8},x_1e_{1,8}\}\\
+    j &= 9: ((e_{1,1},\cdots,e_{1,8}):x_1x_3x_5) = \{x_6,x_4x_6,x_2,x_4,x_2,x_2,x_6,x_4\} = \{x_6,x_4,x_2\}\\
+    &\rightarrow \{x_6e_{1,9},x_4e_{1,9},x_2e_{1,9}\}
 \end{align}
 Therefore ,we have our second level basis of $\Xi$:
 \begin{equation}
     \begin{aligned}
-        \mathcal{B}_2 = &\{x_5e_{1,2},x_6e_{1,3},x_6e_{1,4},x_4e_{1,4},x_6e_{1,5},x_4x_5e_{1,5},x_2x_5e_{1,5},x_5e_{1,6},x_3e_{1,6},x_6e_{1,7},x_5e_{1,7},x_1e_{1,7},\\
-        &x_5e_{1,8},x_3e_{1,8},x_2e_{1,8},x_5e_{1,9},x_3e_{1,9},x_1e_{1,9}\}
+        \mathcal{B}_2 = \{&x_5e_{1,2},x_6e_{1,3},x_6e_{1,4},x_2x_5e_{1,4},x_5e_{1,5},x_4x_6e_{1,5},x_1x_4e_{1,5},x_5e_{1,6},x_4e_{1,6},x_3e_{1,6},x_5e_{1,7},\\
+        & x_4e_{1,7},x_2e_{1,7},x_6e_{1,8},x_2e_{1,8},x_1e_{1,8},x_6e_{1,9},x_4e_{1,9},x_2e_{1,9}\}
     \end{aligned}
 \end{equation}
 After ordering it using the \verb+DegRevLex+, the second level basis is:
 \begin{equation}
     \begin{aligned}
-        \mathcal{B}_2 = &\{x_6e_{1,3},x_5e_{1,2},x_6e_{1,4},x_6e_{1,5},x_4e_{1,4},x_5e_{1,6},x_3e_{1,6},x_5e_{1,9},x_5e_{1,8},x_6e_{1,7},x_3e_{1,9},x_3e_{1,8},x_2e_{1,8},\\
-        &x_1e_{1,9},x_5e_{1,7},x_4x_5e_{1,5},x_2x_5e_{1,5},x_1e_{1,7}\}
+        \mathcal{B}_2 = \{&x_5e_{1,2},x_6e_{1,3},x_6e_{1,4},x_5e_{1,5},x_5e_{1,6},x_4e_{1,6},x_3e_{1,6},x_6e_{1,8},x_5e_{1,7},x_6e_{1,9},x_4x_6e_{1,5},x_4e_{1,7},\\
+        & x_2e_{1,7},x_2e_{1,8},x_1e_{1,8},x_4e_{1,9},x_2x_5e_{1,4},x_2e_{1,9},x_1x_4e_{1,5}\}
     \end{aligned}
 \end{equation}
-Applying the Lemma \ref{lem:mingens} we have
+Renaming each basis with second level subscripts and applying the Lemma \ref{lem:mingens}, we have
 \begin{align}
-    e_{1,4}: j &= 2: (x_6,x_4) = \{x_6\} \rightarrow\{x_6e_{2,5}\}\\
-    e_{1,5}: j &= 2: (x_6,x_4x_5) = \{x_6\} \rightarrow\{x_6e_{2,16}\}\\
-    e_{1,5}: j &= 3: ((x_6,x_4x_5):x_2x_5) = \{x_6,x_4\} \rightarrow\{x_6e_{2,17},x_4e_{2,17}\}\\
-    e_{1,6}: j &= 2: (x_5,x_3) = \{x_5\} \rightarrow\{x_5e_{2,7}\}\\
-    e_{1,7}: j &= 2: (x_6,x_5) = \{x_6\} \rightarrow\{x_6e_{2,15}\}\\
-    e_{1,7}: j &= 3: ((x_6,x_5):x_1) = \{x_6,x_5\} \rightarrow\{x_6e_{2,18},x_5e_{2,18}\}\\
-    e_{1,8}: j &= 2: (x_5,x_3) = \{x_5\} \rightarrow\{x_5e_{2,12}\}\\
-    e_{1,8}: j &= 3: ((x_5,x_3):x_2) = \{x_5,x_3\} \rightarrow\{x_5e_{2,13},x_3e_{2,13}\}\\
-    e_{1,9}: j &= 2: (x_5,x_3) = \{x_5\} \rightarrow\{x_5e_{2,11}\}\\
-    e_{1,9}: j &= 3: ((x_5,x_3):x_1) = \{x_5,x_3\} \rightarrow\{x_5e_{2,14},x_3e_{2,14}\}
+    e_{1,4}: j &= 2: (x_6,x_2x_5) = \{x_6\} \rightarrow\{x_6e_{2,17}\}\\
+    e_{1,5}: j &= 2: (x_5,x_4x_6) = \{x_5\} \rightarrow\{x_5e_{2,11}\}\\
+    e_{1,5}: j &= 3: ((x_5,x_4x_6):x_1x_4) = \{x_5,x_6\} \rightarrow\{x_6e_{2,19},x_5e_{2,19}\}\\
+    e_{1,6}: j &= 2: (x_5:x_4) = \{x_5\} \rightarrow\{x_5e_{2,6}\}\\
+    e_{1,6}: j &= 3: ((x_5,x_4):x_3) = \{x_5,x_4\} \rightarrow\{x_5e_{2,7},x_4e_{2,7}\}\\    
+    e_{1,7}: j &= 2: (x_5,x_4) = \{x_5\} \rightarrow\{x_5e_{2,12}\}\\
+    e_{1,7}: j &= 3: ((x_5,x_4):x_2) = \{x_5,x_4\} \rightarrow\{x_5e_{2,13},x_4e_{2,13}\}\\
+    e_{1,8}: j &= 2: (x_6,x_2) = \{x_6\} \rightarrow\{x_6e_{2,14}\}\\
+    e_{1,8}: j &= 3: ((x_6,x_2):x_1) = \{x_6,x_2\} \rightarrow\{x_6e_{2,15},x_2e_{2,15}\}\\
+    e_{1,9}: j &= 2: (x_6,x_4) = \{x_6\} \rightarrow\{x_6e_{2,16}\}\\
+    e_{1,9}: j &= 3: ((x_6,x_4):x_2) = \{x_6,x_4\} \rightarrow\{x_6e_{2,18},x_4e_{2,18}\}
 \end{align}
 
 Then, we have the third level basis $\mathcal{B}_3$ of $\Xi$:
 
 \begin{equation}
     \begin{aligned}
-        \mathcal{B}_3 = &\{x_6e_{2,5},x_6e_{2,16},x_6e_{2,17},x_4e_{2,17},x_5e_{2,7},x_6e_{2,15},x_6e_{2,18},x_5e_{2,18},x_5e_{2,12},x_5e_{2,13},x_3e_{2,13},\\
-        &x_5e_{2,11},x_5e_{2,14},x_3e_{2,14}\}
+        \mathcal{B}_3 = \{&x_6e_{2,17},x_5e_{2,11},x_6e_{2,19},x_5e_{2,19},x_5e_{2,6},x_5e_{2,7},x_4e_{2,7},x_5e_{2,12},x_5e_{2,13},x_4e_{2,13},x_6e_{2,14},\\
+        &x_6e_{2,15},x_2e_{2,15},x_6e_{2,16},x_6e_{2,18},x_4e_{2,18}\}
     \end{aligned}
 \end{equation}
 After ordering it using the \verb+DegRevLex+, the third level basis is:
 \begin{equation}
     \begin{aligned}
-        \mathcal{B}_3 = &\{x_6e_{2,5},x_5e_{2,7},x_5e_{2,11},x_6e_{2,15},x_5e_{2,12},x_6e_{2,16},x_5,e_{2,13},x_5e_{2,14},x_6e_{2,17},x_3e_{2,13},x_3e_{2,14},\\
-        & x_6e_{2,18},x_4e_{2,17},x_5e_{2,18}\}
+        \mathcal{B}_3 = \{&x_5e_{2,6},x_5e_{2,7},x_4e_{2,7},x_5e_{2,11},x_6e_{2,14},x_5e_{2,12},x_6e_{2,15},x_6e_{2,16},x_6e_{2,17},x_5e_{2,13},x_6e_{2,18},\\
+        & x_6e_{2,19},x_4e_{2,13},x_5e_{2,19},x_2e_{2,15},x_4e_{2,18}\}
     \end{aligned}
 \end{equation}
 
 Applying the Lemma \ref{lem:mingens} once again, we find the following bases:
 \begin{align}
-    e_{2,17}: j &= 2: (x_6,x_4) = \{x_6\} \rightarrow\{x_6e_{3,13}\}\\
-    e_{2,18}: j &= 2: (x_6,x_5) = \{x_6\} \rightarrow\{x_6e_{3,14}\}\\
-    e_{2,13}: j &= 2: (x_5,x_3) = \{x_5\} \rightarrow\{x_5e_{3,10}\}\\
-    e_{2,14}: j &= 2: (x_5,x_3) = \{x_5\} \rightarrow\{x_5e_{3,11}\}
+    e_{2,19}: j &= 2: (x_6,x_5) = \{x_6\} \rightarrow\{x_6e_{3,14}\}\\
+    e_{2,7}: j &= 2: (x_5,x_4) = \{x_5\} \rightarrow\{x_5e_{3,3}\}\\
+    e_{2,13}: j &= 2: (x_5,x_4) = \{x_5\} \rightarrow\{x_5e_{3,13}\}\\
+    e_{2,15}: j &= 2: (x_6,x_2) = \{x_6\} \rightarrow\{x_6e_{3,15}\}\\
+    e_{2,18}: j &= 2: (x_6,x_4) = \{x_6\} \rightarrow\{x_6e_{3,16}\}\\
 \end{align}
 
 The fourth level basis $\mathcal{B}_4$ of $\Xi$ is
 
 \begin{equation}
     \begin{aligned}
-        \mathcal{B}_4 = &\{x_6e_{3.13},x_6e_{3.14},x_5e_{3,10},x_5e_{3,11}\}
+        \mathcal{B}_4 = &\{x_6e_{3,14},x_5e_{3,3},x_5e_{3,13},x_6e_{3,15},x_5e_{3,16}\}
     \end{aligned}
 \end{equation}
 After ordering it using the \verb+DegRevLex+, the last level basis is:
 \begin{equation}
     \begin{aligned}
-        \mathcal{B}_4 = &\{x_5e_{3,10},x_5e_{3,11},x_6e_{3,13},x_6e_{3,14}\}
+        \mathcal{B}_4 = &\{x_5e_{3,3},x_6e_{3,14},x_5e_{3,13},x_6e_{3,15},x_5e_{3,16}\}
     \end{aligned}
 \end{equation}
 
+Now, applying the Lemma \ref{lem:mingens} could not give us any basis from $\mathcal{B}_4$, then we know that we had found the complete Schreyer frame $\Xi$.
+
+Given the frame $\Xi$, we could implement the Algorithm \ref{alg:res} to construct a Schreyer resolution $\Phi$ corresponding to the frame. To start the algorithm, we should first identify the input by checking whether the first level of our frame gives a Gröbner basis. \textcolor{BrickRed}{Add more to explain the set of bases in the first level $\bar{\mathcal{C}_1}$ is a Gröbner basis}. Then we want to order the union of all bases we obtained in the frame $\Xi$.
+
+\begin{equation}
+    \begin{aligned}
+        \mathcal{B} = \{&x_5x_6,x_4x_6,x_2x_5,x_1x_4,x_2x_3,x_1x_2,x_5e_{1,2},x_6e_{1,3},x_6e_{1,4},x_1x_3x_6,x_3x_4x_5,x_5e_{1,5},x_1x_3x_5, \\
+                    & x_5e_{1,6},x_4e_{1,6},x_3e_{1,6},x_6e_{1,8},x_5e_{1,7},x_6e_{1,9},x_4x_6e_{1,5},x_4e_{1,7},x_2e_{1,7},x_2e_{1,8},x_1e_{1,8},x_4e_{1,9},\\
+                    & x_2x_5e_{1,4},x_5e_{2,6},x_2e_{1,9},x_5e_{2,7},x_1x_4e_{1,5},x_4e_{2,7},x_5e_{2,11},x_6e_{2,14},x_5e_{2,12},x_6e_{2,15},x_6e_{2,16},\\
+                    & x_6e_{2,17},x_5e_{2,13},x_6e_{2,18}, x_6e_{2,19},x_4e_{2,13},x_5e_{2,19},x_2e_{2,15},x_4e_{2,18},x_5e_{3,3},x_6e_{3,14},x_5e_{3,13},\\
+                    & x_6e_{3,15},x_5e_{3,16}\}
+    \end{aligned}
+\end{equation}
+
+Given $\bar{\mathcal{C}_1}$ and $\mathcal{B}$, we could apply the algorithm \verb+Resolution+. Since in the Algorithm \ref{alg:res}, we just add the first-level bases in $\mathcal{B}$ to $\mathcal{C}_1$ and $\mathcal{H}_1$, then we have:
+
+\begin{align}
+        \mathcal{C}_1 &= \{x_5x_6,x_4x_6,x_2x_5,x_1x_4,x_2x_3,x_1x_2,x_1x_3x_6,x_3x_4x_5,x_1x_3x_5\}\\
+        \mathcal{H}_1 &= \{x_5x_6,x_4x_6,x_2x_5,x_1x_4,x_2x_3,x_1x_2,x_1x_3x_6,x_3x_4x_5,x_1x_3x_5\}
+\end{align}
+
+Notice that since there are some bases in the second level comes before the first level bases in the ordered list $\mathcal{B}$, we actually to first apply the algorithm on them before we apply the algorithm on the larger first-level bases. For example when we process the basis $x_5e_{1,2}$, the $\mathcal{C}_1$ we are using is $\{x_5x_6,x_4x_6,x_2x_5,x_1x_4,x_2x_3,x_1x_2\}$. However in this example, we don't have any bases in the second level that cannot be vanished using the smaller bases in the first-level. Similarly, we also have some bases from the third level appears before the second-level bases in the list. They are 
+\begin{equation}
+    x_5e_{2,6},\;x_5e_{2,7},\;x_4e_{2,7}
+\end{equation}
+
+This is where we need to be especially careful with the order in the list, since they are using different $\mathcal{C}_2$ when they are compute. For $x_5e_{2,6}$, we have
+
+\begin{equation}
+    \begin{aligned}
+        \mathcal{C}_2 = \{&x_5e_{1,2}-x_4e_{1,1},x_6e_{1,3}-x_2e_{1,1},x_6e_{1,4}-x_1e_{1,2},x_5e_{1,5}-x_3e_{1,3},x_4e_{1,6}-x_2e_{1,4},\\
+        & x_3e_{1,6}-x_1e_{1,5},x_6e_{1,8}-x_3x_4e_{1,1},x_5e_{1,7}-x_1x_3e_{1,1},x_6e_{1,9}-x_1x_3e_{1,1},\\
+        & x_4x_6e_{1,5}-x_2x_3e_{1,2},x_4e_{1,7}-x_1x_3e_{1,2},x_2e_{1,7}-x_1x_6e_{1,5},x_2e_{1,8}-x_4x_5e_{1,5},\\
+        & x_1e_{1,8}-x_3x_5e_{1,4},x_4e_{1,9}-x_3x_4e_{1,4},x_2x_5e_{1,4}-x_4x_5e_{1,6}\}
+    \end{aligned}
+\end{equation}
+
+Applying \verb+Reduce+ on $x_5e_{2,6}$ and the corresponding $\mathcal{C}_2$, we have 
+    
 \section{Conclusion}
 
 \paragraph{  }
