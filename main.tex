@@ -22,6 +22,16 @@
 \usepackage[dvipsnames]{xcolor}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage[all]{xy}
+
+\newcommand{\im}{\ensuremath{\operatorname{im}}}
+\newcommand{\lm}{\ensuremath{\operatorname{LM}}}
+\newcommand{\lt}{\ensuremath{\operatorname{LT}}}
+\newcommand{\lc}{\ensuremath{\operatorname{LC}}}
+\newcommand{\initTerm}{\ensuremath{\operatorname{in}}}
+\newcommand{\mingens}{\ensuremath{\operatorname{mingens}}}
+\newcommand{\multideg}{\ensuremath{\operatorname{multideg}}}
+\renewcommand{\to}{\ensuremath{\rightarrow}}
 
 \usepackage[
 backend=biber,
@@ -42,13 +52,15 @@ sorting=ynt
 \theoremstyle{example}
 \newtheorem{example}{\textbf{Example}}[section]
 
-\title{Computing Minimal Free Schreyer Resolution\\
+\title{Computing and Minimalizing Schreyer Resolution\\
 \begin{large} 
   Senior Project
 \end{large}}
 \author{Ruiqi (Rickey) Huang}
 
 \newcommand{\qedwhite}{\hfill \ensuremath{\Box}}
+
+\newtheorem{prop}{Proposition}[section]
 
 \begin{document}
 \maketitle
@@ -61,185 +73,322 @@ sorting=ynt
 
 \paragraph{  }
 
-\textcolor{BrickRed}{waiting for editing}
-
-\paragraph{  }
+Schreyer resolution of a module is an exact sequence of modules, and computing the Schreyer resolution of a module is an essential way to understand the invariant of the module. This paper investigates an algorithm for computing and minimalizing a Schreyer resolution of a free module found by La Scala and Stillman \cite{la_scala_strategies_1998}. The algorithm gives a minimal resolution in the graded case and gives the Betti numbers of the minimal resolution for free.
 
 \section{Preliminaries}
 
 \paragraph{  }
 
-We define the least common multiple monomials in the following way
-\begin{definition}[\textbf{Least Common Multiple}]
-    Let $f, g \in k[x_1, \cdots, x_n]$ be nonzero polynomials such that $multideg(f) = \alpha$ and $multideg(g) = \beta$, then let $\gamma = (\gamma_1, \cdots, \gamma_n)$, where $\gamma_i = max(\alpha_i,\beta_i)$. Then $x^{\gamma}$ is the least common multiple of $LM(f)$ and $LM(g)$. That is $x^{\gamma} = lcm(LM(f), LM(g))$.
+Before discussing the Schreyer resolution, the definition of Gröbner bases and syzygies should first be introduced, since they are the primary building blocks of the resolution. The Gröbner bases and syzygies are of importance to build the differentials connecting the free modules.
+
+\subsection{Gröbner Bases and Syzygies}
+
+\begin{definition}[\textbf{Gröbner Basis}]\cite{cox_grobner_2015}\label{def:gb}
+    Fix a monomial order on the polynomial ring $k[x_1, \cdots, x_n]$. A finite subset $G = \{g_1, \cdots, g_t\}$ of an ideal $I \subseteq k[x_1, \cdots, x_n]$ different from $\{0\}$ is said to be \textbf{Gröbner basis} (or \textbf{standard basis}) of $I$ if
+    \begin{center}
+        $\langle \lt(g_1), \cdots, \lt(g_t)\rangle = \langle \lt(I) \rangle$
+    \end{center}
 \end{definition}
 
-\paragraph{  }
-To cancel the leading terms of two polynomials, we need the help from the definition below.
-\begin{definition}[\textbf{S-polynomial}]
-    Let $f, g \in k[x_1, \cdots, x_n]$ be nonzero polynomials, and let $x^{\gamma} = lcm(LM(f), LM(g))$ then the S-polynomial of $f$ and $g$ is defined as a polynomial that cancels leading terms of both the polynomials. to be specific.
-    \begin{equation}
-        S(f,g) = \tfrac{x^{\gamma}}{LT(f)} \cdot f - \tfrac{x^{\gamma}}{LT(g)}\cdot g
-    \end{equation}
-\end{definition}
+%\begin{theorem}[\textbf{Hilbert Basis Theorem}]\cite{cox_grobner_2015}\label{thm:hb_thm}
+ %   Every ideal $I \subseteq k[x_1,\cdots,x_n]$ has a finite generating set. In the other words, $I = <g_1,\cdots,g_t>$, for some $g_1,\cdots,g_t \in I$.
+%\end{theorem}
 
-\paragraph{  }
-We can easy see the cancellation of the leading terms simply via the following calculation:
+%Theorem \ref{thm:hb_thm} implies that every ideal $I \subseteq k[x_1, \cdots, x_n]$ has a finite generating set. In other words, $I = <g_1, \cdots, g_t>$ for some $g_1, \cdots, g_t \in I$. Thus, we have the following corollary.
 
-Let $f' = f - LT(f)$ and $g' = g - LT(g)$. Then:
+%\begin{corollary}\cite{cox_grobner_2015}\label{cor:gbI}
+ %   Fix a monomial order on the polynomial ring $k[x_1,\cdots,x_n]$,every ideal in $k[x_1, \cdots, x_n]$ has a Gröbner basis. Additionally, any Gröbner basis for an ideal $I$ is a basis of $I$.
+%\end{corollary}
+
+\paragraph{}
+
+Then, since $\langle LT(I)\rangle$ clearly contains $\langle \lt(g_1), \cdots, \lt(g_s) \rangle$, this set $G$ is a Gröbner basis of $I$ if $\langle \lt(I) \rangle \subseteq \langle \lt(g_1),\cdots, \lt(g_s) \rangle$, that is, the leading term of all elements of the ideal can be written as a $k[x_1, \cdots, x_n]$-linear combination of elements in $\langle \lt(g_1), \cdots, \lt(g_s) \rangle$. Furthermore, there are some properties of Gröbner basis as the followings.
+
+\begin{itemize}
+    \item Dividing $f$ by a Gröbner basis ($G = \{g_1, g_2, \cdots, g_t\}$), the remainder would be unique, but the quotient $q = \{q_1,\cdots,q_t\}$ would be different if the elements of $G$ are listed in a different order.
+    \item $f \in I$ if and only if $0$ is a remainder of $f$ on division by $G$
+    \item Let $\overline{f}^{F}$ is the remainder on division of $f$ by the ordered s-tuple $F = (f_1, f_2, \cdots, f_s)$, then $\overline{f}^{G} = 0$ if and only if $f \in I$
+\end{itemize}
+
+The uniqueness of the remainder can easily be checked by the division algorithm. Consider an example like $f = xy \in I \in \mathbb{Q}[x,y,z]$, and let $G_1 = \{x+z,y-z\}$ and $G_2 = \{y-z,x+z\}$ be a Gröbner basis written using two different orderings; then by the division algorithm one has
+
 \begin{align}
-    \tfrac{x^{\gamma}}{LT(f)} \cdot f - \tfrac{x^{\gamma}}{LT(g)} \cdot g &= \tfrac{x^{\gamma}}{(LT(f) + f')} - \tfrac{x^{\gamma}}{(LT(g) + g')}\\
-    &= x^{\gamma} + \tfrac{x^{\gamma}}{LT(f)} \cdot f' - x^{\gamma} - \tfrac{x^{\gamma}}{LT(g)} \cdot g'\\
-    &= \tfrac{x^{\gamma}}{LT(f)} \cdot f' - \tfrac{x^{\gamma}}{LT(g)} \cdot g' 
+        \text{For } G_1 \text{: } f &= y\cdot(x+z) - z\cdot (y-z) - z^2\\
+        \text{For } G_2 \text{: } f &= x\cdot(y-z) + z\cdot (x+z) - z^2
 \end{align}
 
-Clearly, the S-polynomial's degree drops by canceling the leading terms.
+one could see that even though the remainders are the same, the quotient are different with two different bases. The second and third properties could be proved following the definition of Gröbner basis, since $\langle \lt(I) \rangle \subseteq \langle \lt(g_1),\cdots, \lt(g_s) \rangle$.
 
-\begin{lemma}
-    For a sum $\sum_{i = 1}^{s}{p_i}$, where $multideg(p_i) = \delta \in Z_{\geq0}^{n}$ for all $i$, if $multideg(\sum_{i = i}^{s}{p_i}) < \delta$, then $\sum_{i = 1}^{s}{p_i}$ is a linear combination, with coefficients in $k$, of the S-polynomials $S(p_j, p_l)$ for $1 \leq j,l \leq s$. Furthermore, each $S(p_j, p_l)$ has multidegree $< \delta$.
-\end{lemma}
-
-\textcolor{BrickRed}{include the proof later}
-
-\begin{theorem}[\textbf{Buchberger's Criterion}]
-    Let $I = <f_1,\cdots,f_s>\neq \{0\}$ be a polynomial ideal. Then a Gröbner basis for I can be constructed in a finite number of steps by the following algorithm:
-    \begin{algorithm}[H]
-        \caption{Buchberger's Criterion}\label{alg:bc}
-        \begin{alltt}
-        Input: F = \((f\sb{1},\cdots,f\sb{s})\)
-        Output: a Gröbner basis \(G=(g\sb{1},\cdots,g\sb{t})\) for \(I\), with \(F \subseteq G\)
-        
-        \(G:=F\)
-        REPEAT
-        \quad \quad \quad \(G':=G\)
-        \quad \quad \quad FOR each pair\(\{p,q\}, p \neq q\) in \(G'\) DO
-        \quad \quad \quad \quad \quad \quad \(r := {\overline{S(p,q)}}\sp{G'}\)
-        \quad \quad \quad \quad \quad \quad IF \(r\neq 0\) THEN \(G\:=G\cup\{r\}\)
-        UNTIL \(G=G'\)
-        RETURN \(G\)
-    \end{alltt}
-    \end{algorithm}
-\end{theorem}
-
-\begin{proof}
-\begin{enumerate}
-    \item Let $I$ be a polynomial ideal. Then a basis $G = \{g_1, \cdots, g_t\}$ of $I$ is a Gröbner basis of $I$ if and only if for all pairs $i \neq j$, the remainder on division of $S(g_i, g_j)$ by $G$ (listed in some order) is zero.
-    \item This algorithm terminates because of the ACC ($LT(G') \subseteq LT(G)$)
-\end{enumerate}
-\end{proof}
 
 \begin{remark}
-    The Buchberger's algorithm only produces a Gröbner Basis which is not unique, and it might include redundancy.
+    An obstruction for a basis being a Gröbner basis is that the cancellation occurs in $f = ax^{\alpha}g_i - bx^{\beta}g_{j}$, where $g_i,g_j \in I$, and $f \in \langle \lt(I) \rangle$, but $f \notin \langle \lt(g_i), \lt(g_j)\rangle$.
 \end{remark}
 
+\paragraph{}
+
+For the convenience and efficiency of the computation, we always want our Gröbner basis to be as small as possible while it still has the same properties introduced above. Thus, we could make the following two definitions of minimal and reduced Gröbner basis.
+
 \begin{definition}[\textbf{Minimal Gröbner Basis}]
-    The minimal Gröbner basis is a Gröbner basis  $G$ for $I$ such that:
+    The \textbf{minimal} Gröbner basis is a Gröbner basis  $G$ for $I$ such that:
     \begin{itemize}
-        \item $LC(p) = 1$ for all $p \in G$
-        \item For all $p \in G$, none of $LT(p)$ lies in $<LT(G\backslash\{p\})>$
+        \item $\lc(p) = 1$ for all $p \in G$
+        \item For all $p \in G$, none of $\lt(p)$ lies in $\langle \lt(G\backslash\{p\}) \rangle$
     \end{itemize}
 \end{definition}
 
 \begin{definition}[\textbf{Reduced Gröbner Basis}]
-    The reduced Gröbner basis is a Gröbner basis  $G$ for $I$ such that:
+    The \textbf{reduced} Gröbner basis is a Gröbner basis $G$ for $I$ such that:
     \begin{itemize}
-        \item $LC(p) = 1$ for all $p \in G$
-        \item For all $p \in G$, none of $LT(p)$ lies in $<LT(G\backslash\{p\})>$
+        \item $\lc(p) = 1$ for all $p \in G$
+        \item For all $p \in G$, none of monomial in $p$ lies in $\langle \lt(G\backslash\{p\})\rangle$
     \end{itemize}
 \end{definition}
 
-\begin{remark}
-    The row reduction is a special case for buchberger's algorithm
-\end{remark}
+\begin{example}
+    Let $\{xy+yz,yz+xyz\}$ be a Gröbner basis of $I \in \mathbb{Q}[x,y,z]$, $\{xy+yz,yz+xyz\}$ is a minimal Gröbner basis, but it is not a reduced Gröbner basis. If we further reduced it, we could obtain $\{xy,yz\}$, which is a reduced Gröbner basis.
+\end{example}
 
-\subsection{Gröbner Bases}
+Because Gröbner basis has such a pleasant property of describing polynomials with linear combination of basis elements and a unique remainder, it would be nice for one to know how to compute the Gröbner basis of an ideal in an efficient way,so we introduce Buchberger's algorithm. However, we first need some more definitions to understand the algorithm. We define the least common multiple monomials the following way.
 
-\begin{definition}[\textbf{Gröbner Basis}]\cite{cox_grobner_2015}\label{def:gb}
-    Fix a monomial order on the polynomial ring $k[x_1, \cdots, x_n]$. A finite subset $G = \{g_1, \cdots, g_t\}$ of an ideal $I \subseteq k[x_1, \cdots, x_n]$ different from $\{0\}$ is said to be \textbf{Gröbner basis} (or \textbf{standard basis}) if
-    \begin{center}
-        $<LT(g_1), \cdots, LT(g_t)> = <LT(I)>$
-    \end{center}
+\begin{definition}[\textbf{Least Common Multiple}]
+    Let $f, g \in k[x_1, \cdots, x_n]$ be nonzero polynomials such that $multideg(f) = \alpha$ and $multideg(g) = \beta$, then let $\gamma = (\gamma_1, \cdots, \gamma_n)$, where $\gamma_i = max(\alpha_i,\beta_i)$. Then $x^{\gamma}$ is the least common multiple of $LM(f)$ and $LM(g)$, that is, $x^{\gamma} = lcm(\lm(f), \lm(g))$.
 \end{definition}
 
+\begin{definition}[\textbf{S-polynomial}]
+    Let $f, g \in k[x_1, \cdots, x_n]$ be nonzero polynomials, and let $x^{\gamma} = lcm(LM(f), LM(g))$ then the S-polynomial of $f$ and $g$ is defined as a polynomial that cancels leading terms of both the polynomials. To be specific,
+    \begin{equation}
+        S(f,g) = \tfrac{x^{\gamma}}{\lt(f)} \cdot f - \tfrac{x^{\gamma}}{\lt(g)}\cdot g
+    \end{equation}
+\end{definition}
 
+\paragraph{  }
+We can easily check the cancelation of the leading terms simply by the following calculation:
 
-\begin{theorem}[\textbf{Hilbert Basis Theorem}]\cite{cox_grobner_2015}\label{thm:hb_thm}
-    Every ideal $I \subseteq k[x_1,\cdots,x_n]$ has a finite generating set. In the other words, $I = <g_1,\cdots,g_t>$, for some $g_1,\cdots,g_t \in I$.
+Let $f' = f - LT(f)$ and $g' = g - LT(g)$. Then:
+\begin{align}
+    \tfrac{x^{\gamma}}{\lt(f)} \cdot f - \tfrac{x^{\gamma}}{\lt(g)} \cdot g &= \tfrac{x^{\gamma}}{(\lt(f) + f')} - \tfrac{x^{\gamma}}{(\lt(g) + g')}\\
+    &= x^{\gamma} + \tfrac{x^{\gamma}}{\lt(f)} \cdot f' - x^{\gamma} - \tfrac{x^{\gamma}}{\lt(g)} \cdot g'\\
+    &= \tfrac{x^{\gamma}}{\lt(f)} \cdot f' - \tfrac{x^{\gamma}}{\lt(g)} \cdot g' 
+\end{align}
+
+As what $\tfrac{x^{\gamma}}{\lt(f)}$ and $\tfrac{x^{\gamma}}{\lt(g)}$ do in the previous calculation, they help to vanish the leading terms of the polynomials with performing the "dot product". To generalize this process, we define such monomials for any finite set of polynomials as the syzygy of this set of polynomials.
+
+\begin{definition}[\textbf{Syzygy}]
+    Let $F = (f_1, \cdots, f_l) \in {(k[x_1,\cdots,x_n]})^l$. A \textbf{syzygy} on the leading terms $\lt(f_1), \cdots, \lt(f_l)$ of $F$ is a $l$-tuple of polynomials $S = (s_1,,\cdots, s_l) \in {(k[x_1,\cdots,x_n]})^l$ such that
+    \begin{equation}
+        \sum_{i = 1}^{l} s_i \cdot \lt(f_i) = 0
+    \end{equation}
+\end{definition}
+
+\begin{example}
+    Let $F = (3xy^2 + y, xyz+x^2z, 5y^3+7xyz)$, then $S = (yz,2y^2,-xz)$ is a syzygy of $F$, because $3xy^2\cdot yz +xyz \cdot 2y^2 + 5y^3\cdot(-xz) = 3xy^3z + 2xy^3z - 5xy^3z = 0$.
+\end{example}
+
+%\begin{lemma}
+ %   For a sum $\sum_{i = 1}^{s}{p_i}$, where $multideg(p_i) = \delta \in Z_{\geq0}^{n}$ for all $i$, if $multideg(\sum_{i = i}^{s}{p_i}) < \delta$, then $\sum_{i = 1}^{s}{p_i}$ is a linear combination, with coefficients in $k$, of the S-polynomials $S(p_j, p_l)$ for $1 \leq j,l \leq s$. Furthermore, each $S(p_j, p_l)$ has multidegree $< \delta$.
+%\end{lemma}
+
+%\textcolor{BrickRed}{include the proof later}
+
+\paragraph{}
+
+Now, we could outline the details of the Buchberger algorithm.
+
+\begin{theorem}[\textbf{Buchberger's Algorithm}]
+    Let $I = \langle f_1,\cdots,f_s \rangle \neq \{0\}$ be a polynomial ideal. Then a Gröbner basis for I can be constructed in a finite number of steps by the following algorithm:
+    \begin{algorithm}[H]
+        \caption{Buchberger's Algorithm}\label{alg:bc}
+        \begin{algorithmic}
+        \State Input: F = $(f_{1},\cdots,f_{s})$
+        \State Output: a Gröbner basis $G=(g_{1},\cdots,g_{t})$ for $I$, with $F \subseteq G$
+        \newline
+        \State $G:=F$
+        \State REPEAT
+            \State $G':=G$
+            \For{each pair$\{p,q\}, p \neq q$ in $G'$}
+                \State $r := {\overline{S(p,q)}}^{G'}$
+                \If{$r\neq 0$}
+                    \State $G\:=G\cup\{r\}$
+                \EndIf
+            \EndFor
+        \State UNTIL $G=G'$
+        \State return $G$
+    \end{algorithmic}
+    \end{algorithm}
 \end{theorem}
 
-Theorem \ref{thm:hb_thm} implies that every ideal $I \subseteq k[x_1, \cdots, x_n]$ has a finite generating set. In other words, $I = <g_1, \cdots, g_t>$ for some $g_1, \cdots, g_t \in I$. Thus, we have the following corollary.
+\begin{proof}
 
-\begin{corollary}\cite{cox_grobner_2015}\label{cor:gbI}
-    Fix a monomial order on the polynomial ring $k[x_1,\cdots,x_n]$,every ideal in $k[x_1, \cdots, x_n]$ has a Gröbner basis. Additionally, any Gröbner basis for an ideal $I$ is a basis of $I$.
-\end{corollary}
+To prove the algorithm, we first need to understand the connection between $S$-polynomials and Gröbner bases by the theorem below.
 
-\subsection{Properties of Gröbner Bases}
-\begin{itemize}
-    \item $<LT(I)>$ is strictly larger than $<LT(g_1), \cdots, LT(g_s)>$
-    \item Dividing $f$ by a Gröbner basis ($G = \{g_1, g_2, \cdots, g_t\}$), the remainder would be unique, but the quotient $q$ would be different if the generators of $G$ are list in a different order.
-    \item $f \in I$ if and only if $0$ is a remainder of $f$ on division by $G$
-    \item $\overline{f}^{F}$ is the remainder on division of $f$ by the ordered s-tuple $F = (f_1, f_2, \cdots, f_s)$
-\end{itemize}
+\begin{theorem}[Buchberger's Criterion]\label{thm:buchCriter}
+    Let $I$ be a polynomial ideal. Then a basis $G = \{g_1, \cdots, g_t\}$ of $I$ is a Gröbner basis of $I$ if and only if $\forall \{i,j\}$ such that $i \neq j$, the remainder on the division of $S(g_i,g_j)$ by $G$ is zero.
+\end{theorem}
+
+The proof of Theorem \ref{thm:buchCriter} could be referred to the proof of Theorem 6 of Chapter $2 \;\S6$ in Cox, Little, and O'Shea's book \cite{cox_grobner_2015}. 
+
+Because for any pair of $p,q$, $S(p,q) = \sum_{i = 1}^{t}{h_ig_i} + r$ for $g_i \in G'$ with $i = 1, \cdots, t$. Then we could show that $S(p,q) \in I$ since $p,q \in G' \subseteq I$ and the absorption property of $I$ guarantee that the two polynomials summed when computing $S(p,q)$ are in $I$. Also by the absorption property, since $g_i \in G' \subseteq I$, each $h_ig_i \in I$. Therefore, $\sum_{i = 1}^{t}{h_ig_i} \in I$ and $r = S(p,q) -  \sum_{i = 1}^{t}{h_ig_i} \in I$. Therefore, for each iteration, $G\:=G\cup\{r\} \subseteq I$, so $G$ is a basis for $I$. Since the algorithm above ends when the $G = G'$, that is, when the remainder $r = 0, \; \forall p \neq q \in G'$, applying Theorem \ref{thm:buchCriter}, $G$ is a Gröbner basis of $I$ at the end of the algorithm.
+
+It is sufficient to show that the algorithm ends in finite steps. To prove that the algorithm terminates, we need the Ascending Chain Condition as follows.
+
+\begin{theorem}[The Ascending Chain Condition (ACC)]
+    Let $I_1 \subseteq I_2 \subseteq I_3 \subseteq \cdots$ be an ascending chain of ideals in $k[x_1, \cdots, x_n]$. Then there exists an $N \geq 1$ such that $I_{N} = I_{N+1} = I_{N+2} = \cdots$.
+\end{theorem}
+
+The proof of Theorem \ref{thm:buchCriter} could be referred to the proof of Theorem 7 of Chapter $2 \;\S5$ of Cox, Little, and O'Shea's book \cite{cox_grobner_2015}. 
+
+since for each iteration, we have $G' \subseteq G$, then $\langle \lt(G') \rangle \subseteq \langle \lt(G) \rangle$. Let $G_0 = F$, and if we keep track of $G$ from each iteration and label them as $G_1, G_2, \cdots$, then we have an ascending chain of ideals $\langle \lt(G_0) \rangle \subseteq \langle \lt(G_1) \rangle \subseteq \langle \lt(G_2) \rangle \subseteq \cdots$. Therefore, applying ACC, we know that $\exists N \geq 1$ such that $\langle \lt(G_{N}) \rangle = \langle \lt(G_{N+1}) \rangle = \langle \lt(G_{N+2}) \rangle = \cdots$. This shows that the algorithm ends at some point with a finite number of steps.
+\end{proof}
 
 \begin{remark}
-    An obstruction to a basis be a Gröbner basis is that the cancellation occur in $f_k = ax^{\alpha}f_i - bx^{\beta}f_{j}$, where $f_i,f_j \in I$, and $f_k \in <LT(I)>$, but $f_k \notin <LT(f_i), LT(f_j)>$.
+    The Buchberger's algorithm only produces a Gröbner Basis which is not unique, and it might include redundancy. The Gröbner basis produced by the algorithm is not necessarily a reduced Gröbner basis, since we only check the leading terms of the polynomials using the $S$-polynomials instead of checking for every monomial in the polynomials. Moreover, it even does not promise a minimal Gröbner basis. For example, when we input Algorithm \ref{alg:bc} with $F$, which is already a Gröbner basis with redundancy, which means that there is at least one polynomial $p \in F$ such that $\lt(p) \in \langle \lt(F\backslash \{p\}) \rangle$, the algorithm would output $G = F$ directly by Theorem \ref{thm:buchCriter}, which is not minimal by definition.
 \end{remark}
-
-- a power product (or monomial of S): $t = x_1^{\alpha_1}\cdots x_n^{\alpha_n} \in S$, where $\alpha_1, \cdots, \alpha_n$ are non-negative integers
-- for any set $G \subseteq S$, we let $in(G)$ denote the $K$-vector space spanned by the monomials $\{lm(f):f \in G\}$.
-- If $J \subset S$ is an ideal, then $in(J) \subset S$ is the monomial ideal generated by the lead terms of $J$
-- Let $R = S/J$ be a factor ring of $S$. Let $N$ denotes the $K$-vector space spanned by the set of standard monomials of $R$, that is, the set of monomials of $S$ not in $in(J)$. Any element $f \in R$ may be uniquely written as the image of an element $g \in N$, and we set $lc(f) = lc(g)$ and $lm(f) = lm(g) \in N$.
-- For any set $G \subset R$, let $in(G)$ denote the $K$-vectors space generated by the lead monomials $\{lm(f):f\in G\}$. Thus, $N = in(R)$, and $in(S) = N \bigoplus in(J)$, as $K$-vector spaces.
-- Let $F$ be a free module over $R$, and let $\hat{F}$ be the free $S$-module with the same rank as $F$ and corresponding basis. A **monomial** of $F$ is by definition any element $m = t \cdot e$, where $t \in N$ is a standard monomial and $e$ is any element of the canonical basis of $\hat{F}$.
-- **Term order on** $F$ (a total order on the monomials of $F$) such that:
-    - if $m <_F n$, then $t\cdot m <_F t \cdot n$;
-    - if $s <_S t$, then $s\cdot e <_F t \cdot e$;
-- for all $m, n$ monomials of $F$, $s,t$ power products in $S$, and $e$ any basis element of $F$.
-- $\{g_1, \cdots, g_s\} \subset I\subset F$ is a Gröbner basis of the $R$-module I, if $\{lm(g_1), \cdots, lm(g_s)\}$ generates $in(I)$, that is, every monomial in $in(I)$ is divisible by some $lm(g_i)$.
-- auto-reduced Gröbner basis: every lead monomial $lm(g_i)$ divides no monomial occuring in ang $g_j$ other than itself
-- irredundant Gröbner basis: $in(I)$ is minimally generated by $\{lm(g_1), \cdots, lm(g_s)\}$, which in turn means that this set generates $in(I)$, and no lead term $lm(g_i)$ divides any $lm(g_j)$ for $j \neq i$
 
 \section{Schreyer Frame and Schreyer Resolution}
 
+\paragraph{}
+
+Before introducing the Schreyer resolutions and their frames, we need to first define the following terms in rings, vector spaces, and modules.
+
+\begin{definition}[\textbf{Power Product}]
+    Let $S = K[x_1,\cdots, x_n]$ be a polynomial ring with a term order $>$ over a field $K$. A \textbf{power product} $t$ (or monomial of $S$) is $t = x_1^{\alpha_1}\cdots x_n^{\alpha_n} \in S$, where $\alpha_1, \cdots, \alpha_n$ are non-negative integers.
+\end{definition}
+
+With this definition, we could uniquely write every nonzero element $f \in S$ as 
+\begin{equation}
+    f = c_1\cdot m_1 + \cdots + c_l\cdot m_l
+\end{equation}
+where for $i = 1, \cdots, l$, $c_i \in K$ and are non-zero, and $m_i$ are monomials such that $m_1 > m_2 > \cdots > m_l$. In addition, we define the leading coefficient of $f \in S$ to be $lc(f) = c_1$, and the leading monomial of $f$ to be $lm(f) = m_1$.
+
+\paragraph{}
+
+In the next definition, we define a way to build vector spaces using subsets of the ideal $S$.
+
+\begin{definition}
+    Let $S = K[x_1,\cdots, x_n]$ be a polynomial ring with a term order $>$ over a field $K$. For any set $G \subseteq S$, we let $in(G)$ denote the \textbf{$K$-vector space spanned by the monomials} $\{lm(f):f \in G\}$.
+\end{definition}
+
+\paragraph{}
+
+Because $R = K[x_1,\cdots,x_n]$, the scalar multiples of $in(G)$ is well-defined. Since the monomials of $G$ are in $R$, and $R$ is a polynomial ring, $in(G)$ indeed defines a $K$-vector space.
+
+\begin{prop}
+    Let $S$ be defined as the above. If $J \subset S$ is an ideal, then $in(J) \subset S$ is the monomial ideal generated by the lead terms of $J$
+\end{prop}
+
+\begin{proof}
+    
+\end{proof}
+
+\begin{prop}
+    Let $R = S/J$ be a factor ring of $S$. Let $N$ denote the $K$-vector space spanned by the set of standard monomials of $R$, that is, the set of monomials of $S$ not in $in(J)$. Any element $f \in R$ can be written uniquely as the image of an element $g \in N$, and we set $lc(f) = lc(g)$ and $lm(f) = lm(g) \in N$. Thus, $N = in(R)$, and $in(S) = N \bigoplus in(J)$, as $K$-vector spaces.
+\end{prop}
+
+\begin{proof}
+    
+\end{proof}
+
+\paragraph{}
+
+With such a factor ring, we could build a free module from the ring, and we define the elements and the term orders on the elements of the newly constructed module $F$ as the following.
+
+\begin{definition}[\textbf{Monomials of a Module}]
+    Let $F$ be a free module over $R$, and let $\hat{F}$ be the free $S$-module with the same rank as $F$ and corresponding basis. A \textbf{monomial} of $F$ is, by definition, any element $m = t \cdot e$, where $t \in N$ is a standard monomial and $e$ is any element of the canonical basis of $\hat{F}$.
+\end{definition}
+
+\begin{definition}[\textbf{Term order on a Free Module}]
+    The term order on a free module $F$ over $K$ (a total order on the monomials of $F$) such that:
+    \begin{itemize}
+        \item if $m <_F n$, then $t\cdot m <_F t \cdot n$;
+        \item if $s <_S t$, then $s\cdot e <_F t \cdot e$;
+    \end{itemize}
+    for all $m, n$ monomials of $F$, $s,t$ power products in $S$, and $e$ any basis element of $F$.
+\end{definition}
+
+\subsection{Gröbner Bases for Modules}  
+\begin{itemize}
+    \item $\{g_1, \cdots, g_s\} \subset I\subset F$ is a Gröbner basis of the $R$-module I, if $\{lm(g_1), \cdots, lm(g_s)\}$ generates $in(I)$, that is, every monomial in $in(I)$ is divisible by some $lm(g_i)$.
+    \item auto-reduced Gröbner basis: every lead monomial $lm(g_i)$ divides no monomial occurring in any $g_j$ other than itself
+    \item irredundant Gröbner basis: $in(I)$ is minimally generated by $\{lm(g_1), \cdots, lm(g_s)\}$, which in turn means that this set generates $in(I)$, and no lead term $lm(g_i)$ divides any $lm(g_j)$ for $j \neq i$
+\end{itemize}
+
+\begin{definition}[\textbf{Complex and Exactness}]
+    Let $\Phi = \{\varphi_n : A_n \to A_{n-1}\}$ be a sequence of homomorphisms of $R$-modules for $n \in \mathbb{Z}$: 
+    \begin{equation}
+        \Phi : \cdots \to A_{n+1} \xrightarrow{\varphi_{n+1}} A_n \xrightarrow{\varphi_n} A_{n-1} \to \cdots 
+    \end{equation}
+    Then, $\Phi$ is a \textbf{complex} if $\forall n \in \mathbb{Z}$, $\im \varphi_{n+1} \subseteq \ker \alpha_n$.  If $\im \varphi_{i+1} = \ker \varphi_i$, $\Phi$ is \textbf{exact} in (homological) degree $i$.  If $\Phi$ is exact
+    in every homological degree, we say that $\Phi$ is exact.  If $\Phi$ is exact in every homological degree except 0, then we say $\Phi$ is \textbf{acyclic}.
+\end{definition}
+
+Let $R = S/J$ be the factor ring as previously defined, and let $F_i$ be free $R$-modules with a given (canonical) basis $\varepsilon_{i}$ of $\hat{F_i}$, and $M = F_0/I$.  A \textbf{free resolution} of $M$ is an acyclic complex of free $R$-modules:
+
+\begin{equation}
+    \Phi: \cdots \rightarrow F_l \xrightarrow{\varphi_l} F_{l-1} \xrightarrow{\varphi_{l-1}} \cdots \xrightarrow{\varphi_1} F_0
+\end{equation}
+
+Define $\mathcal{C}_i = \varphi_i(\varepsilon_i)$ as the image of the given basis and define the level of an element $f$ in $C_i$ to be $lev(f) = i$.
+
+\textcolor{BrickRed}{Discuss how to (theoretically) find a free resolution}.
+
+$$
+\xymatrix@C=1pc@R=1pc{
+F_1 \ar@{->>}[dr] \ar[rr]^{\varphi_1} &                      &  F_0 \ar[r] & M \ar[r] & 0\\
+            & K_0 \ar@{^{(}->}[ur]  &             &          & \\
+}
+$$
+
+\textcolor{BrickRed}{How to practically find a free resolution: via the Schreyer frame}
+
+\textcolor{BrickRed}{Remind definition of colon ideal}
+\begin{lemma}\label{lem:mingens}
+    $in(ker\xi_i)$ is minimally generated by
+    \begin{equation}
+        \bigcup_{e\in{\varepsilon}_{i-1}}{\bigcup_{j = 2}^{r}{mingens((in(J),t_1,\cdots,t_{j-1}):t_j)\cdot \epsilon_j}}
+    \end{equation}
+    where $\varepsilon_i(e) = \{\epsilon_1,\cdots,\epsilon_r\}$
+    \textcolor{BrickRed}{edit more}
+\end{lemma}
+
 \begin{algorithm}[H]
-\caption{Resolution}\label{alg:res}
-    \begin{alltt}
-        Input: an irredundant Gröbner basis \(\bar{{\mathcal{C}}\sb{1}}\) of \(I\), 
-        and an ordered union \(\mathcal{B}\) of bases of all levels
-        Output: the set of Gröbner bases \(\mathcal{C}\sb{1},\cdots,\mathcal{C}\sb{l}\),
-        and the set of corresponding syzygies \(\mathcal{H}\sb{1},\cdots,\mathcal{H}\sb{l}\)
-        
-        Resolution\([\bar{{\mathcal{C}}\sb{1}}]\)
-        \({\mathcal{C}}\sb{i},{\mathcal{H}}\sb{i}:=\emptyset (1\leq i\leq l)\)
-        while \(\mathcal{B}\neq\emptyset\) do
-        \quad \quad \(m:=min\mathcal{B}\)
-        \quad \quad \(\mathcal{B}:=\mathcal{B}\backslash\{m\}\)
-        \quad \quad \(i:=lev(m)\)
-        \quad \quad if \(i=1\) then
-        \quad \quad \quad \quad \(g:=\) the element of \(\bar{{\mathcal{C}}\sb{i}}\) s.t. \(lm(g)=m\)
-        \quad \quad \quad \quad \({\mathcal{C}}\sb{1}:={\mathcal{C}}\sb{1}\cup\{g\}\)
-        \quad \quad \quad \quad \({\mathcal{H}}\sb{1}:={\mathcal{H}}\sb{i}\cup\{g\}\)
-        \quad \quad else
-        \quad \quad \quad \quad \((f,g):=\)Reduce\([m,{\mathcal{C}}\sb{i-1}]\)
-        \quad \quad \quad \quad \({\mathcal{C}}\sb{i}:={\mathcal{C}}\sb{i}\cup\{g\}\)
-        \quad \quad \quad \quad if \(f\neq 0\) then
-        \quad \quad \quad \quad \quad \quad \({\mathcal{C}}\sb{i-1}:={\mathcal{C}}\sb{i-1}\cup\{f\}\)
-        \quad \quad \quad \quad \quad \quad \(\mathcal{B}:=\mathcal{B}\backslash\{lm(f)\}\)
-        \quad \quad \quad \quad else
-        \quad \quad \quad \quad \quad \quad\({\mathcal{H}}\sb{i}:={\mathcal{H}}\sb{i}\cup\{g\}\)
-        return \({\mathcal{C}}\sb{i},{\mathcal{H}}\sb{i}(1\leq i\leq l)\)
-\end{alltt}
+\caption{Resolution$[\bar{{\mathcal{C}}\sb{1}}]$}\label{alg:res}
+    \begin{algorithmic}
+        \State Input: an irredundant Gröbner basis $\bar{{\mathcal{C}}_{1}}$ of $I$, and an ordered union $\mathcal{B}$ of bases of all levels
+        \State Output: the set of Gröbner bases $\mathcal{C}_{1},\cdots,\mathcal{C}_{l}$, and the set of corresponding syzygies $\mathcal{H}_{1},\cdots,\mathcal{H}_{l}$
+        \newline
+        \State ${\mathcal{C}}_{i},{\mathcal{H}}_{i}:=\emptyset (1\leq i\leq l)$
+        \While{$\mathcal{B}\neq\emptyset$}
+            \State $m:=min\mathcal{B}$
+            \State $\mathcal{B}:=\mathcal{B}\backslash\{m\}$
+            \State $i:=lev(m)$
+            \If{$i=1$}
+                \State $g:=$ the element of $\bar{{\mathcal{C}}_{i}}$ s.t. $lm(g)=m$
+                \State ${\mathcal{C}}_{1}:={\mathcal{C}}_{1}\cup\{g\}$
+                \State ${\mathcal{H}}_{1}:={\mathcal{H}}_{i}\cup\{g\}$
+            \State else
+                \State $(f,g):=$ Reduce$[m,{\mathcal{C}}_{i-1}]$
+                \State ${\mathcal{C}}_{i}:={\mathcal{C}}_{i}\cup\{g\}$
+                \If{$f\neq 0$}
+                    \State ${\mathcal{C}}_{i-1}:={\mathcal{C}}_{i-1}\cup\{f\}$
+                    \State $\mathcal{B}:=\mathcal{B}\backslash\{lm(f)\}$
+                \State else
+                    \State ${\mathcal{H}}_{i}:={\mathcal{H}}_{i}\cup\{g\}$
+                \EndIf
+            \EndIf
+        \EndWhile
+        \State return ${\mathcal{C}}_{i},{\mathcal{H}}_{i}(1\leq i\leq l)$
+        \end{algorithmic}
 \end{algorithm}
 
 The Algorithm \verb+Reduce+ in \verb+Resolution+ is elaborated in the Algorithm \ref{alg:red}.
 
-\begin{algorithm}
+\begin{algorithm}[H]
 \caption{Reduce[$t\cdot \epsilon,\mathcal{C}_{i-1}]$}\label{alg:red}
     \begin{algorithmic}
     \State $f:=t\cdot k$, where $\varphi_{i-1}(\epsilon) = k$
     \State $g:=t\cdot \epsilon$
     \While{$f \neq 0$ and $lm(f) \in in\langle\mathcal{C}_{i-1}\rangle$}
-        \State choose  $h \in \mathcal{C}_{i-1}$ s.t. $lm(h)\vert lm(f)$  \textbf{($h \neq f$ at the first itration)}
+        \State choose  $h \in \mathcal{C}_{i-1}$ s.t. $lm(h)\vert lm(f)$  \textbf{($h \neq f$ at the first iteration)}
         \State $f := f - \tfrac{lc(f)lpp(f)}{lc(h)lpp(h)}h$
         \State $g := g - \tfrac{lc(f)lpp(f)}{lc(h)lpp(h)}e$, where $\varphi_{i-1}(e) = h$
     \EndWhile
@@ -250,26 +399,17 @@ The Algorithm \verb+Reduce+ in \verb+Resolution+ is elaborated in the Algorithm 
     \end{algorithmic}
 \end{algorithm}
 
-\begin{lemma}\label{lem:mingens}
-    $in(ker\xi_i)$ is minimally generated by
-    \begin{equation}
-        \bigcup_{e\in{\varepsilon}_{i-1}}{\bigcup_{j = 2}^{r}{mingens((in(J),t1,\cdots,t_{j-1}):t_j)\cdot \epsilon_j}}
-    \end{equation}
-    where $\varepsilon_i(e) = \{\epsilon_1,\cdots,\epsilon_r\}$
-    \textcolor{BrickRed}{edit more}
-\end{lemma}
-
 \begin{example}
     Let $K$ be a field of any characteristic and let the polynomial ring $S = K[x_1,\cdots,x_6]$ with the term order of \verb+DegRevLex+. Consider the graded module $M = S/I$, for 
     \begin{equation}
-        I = <x_2x_3,x_2x_4,x_5x_6,x_1x_2,x_4x_6,x_2x_5,x_1x_3x_5,x_1x_3x_6,x_3x_4x_5>
+        I = \langle x_2x_3,x_2x_4,x_5x_6,x_1x_2,x_4x_6,x_2x_5,x_1x_3x_5,x_1x_3x_6,x_3x_4x_5\rangle
     \end{equation} 
-    Using the algorithm \verb+Rsolution+ for $char(K) \neq 2$ to the module $M$, find the minimal Schreyer resolution.
+    Using the algorithm \verb+Resolution+ for $char(K) \neq 2$ to the module $M$, find the minimal Schreyer resolution.
 \end{example}
 
 \paragraph{  }
 
-\textbf{Solution:} We first want to compute the Schreyer frame $\Xi$ for $M$. Starting from this angle, the basis of the first level of the Schreyer frame is $I$, because it generates the kernel of the map $F_0 \rightarrow M$. Hence, we have 
+\textbf{Solution:} We first want to compute the Schreyer frame $\Xi$ for $M$. With this plan, the basis of the first level of the Schreyer frame is $I$, because it generates the kernel of the map $F_0 \rightarrow M$. Hence, we have 
 \begin{equation}
     \mathcal{B}_1 = \{x_2x_3,x_2x_4,x_5x_6,x_1x_2,x_4x_6,x_2x_5,x_1x_3x_5,x_1x_3x_6,x_3x_4x_5\}
 \end{equation}
@@ -307,7 +447,7 @@ After ordering it using the \verb+DegRevLex+, the second level basis is:
         & x_2e_{1,7},x_2e_{1,8},x_1e_{1,8},x_4e_{1,9},x_2x_5e_{1,4},x_2e_{1,9},x_1x_4e_{1,5}\}
     \end{aligned}
 \end{equation}
-Renaming each basis with second level subscripts and applying the Lemma \ref{lem:mingens}, we have
+Renaming each basis with second-level subscripts and applying the Lemma \ref{lem:mingens}, we have
 \begin{align}
     e_{1,4}: j &= 2: (x_6,x_2x_5) = \{x_6\} \rightarrow\{x_6e_{2,17}\}\\
     e_{1,5}: j &= 2: (x_5,x_4x_6) = \{x_5\} \rightarrow\{x_5e_{2,11}\}\\
@@ -347,7 +487,7 @@ Applying the Lemma \ref{lem:mingens} once again, we find the following bases:
     e_{2,18}: j &= 2: (x_6,x_4) = \{x_6\} \rightarrow\{x_6e_{3,16}\}\\
 \end{align}
 
-The fourth level basis $\mathcal{B}_4$ of $\Xi$ is
+The fourth-level basis $\mathcal{B}_4$ of $\Xi$ is
 
 \begin{equation}
     \begin{aligned}
@@ -363,7 +503,7 @@ After ordering it using the \verb+DegRevLex+, the last level basis is:
 
 Now, applying the Lemma \ref{lem:mingens} could not give us any basis from $\mathcal{B}_4$, then we know that we had found the complete Schreyer frame $\Xi$.
 
-Given the frame $\Xi$, we could implement the Algorithm \ref{alg:res} to construct a Schreyer resolution $\Phi$ corresponding to the frame. To start the algorithm, we should first identify the input by checking whether the first level of our frame gives a Gröbner basis. \textcolor{BrickRed}{Add more to explain the set of bases in the first level $\bar{\mathcal{C}_1}$ is a Gröbner basis}. Then we want to order the union of all bases we obtained in the frame $\Xi$.
+Given the frame $\Xi$, we could implement the Algorithm \ref{alg:res} to construct a Schreyer resolution $\Phi$ corresponding to the frame. To start the algorithm, we should first identify the input by checking whether the first level of our frame gives a Gröbner basis. \textcolor{BrickRed}{Add more to explain the set of bases at the first level $\bar{\mathcal{C}_1}$ is a Gröbner basis}. Then we want to order the union of all bases we obtained in the frame $\Xi$.
 
 \begin{equation}
     \begin{aligned}
@@ -375,31 +515,37 @@ Given the frame $\Xi$, we could implement the Algorithm \ref{alg:res} to constru
     \end{aligned}
 \end{equation}
 
-Given $\bar{\mathcal{C}_1}$ and $\mathcal{B}$, we could apply the algorithm \verb+Resolution+. Since in the Algorithm \ref{alg:res}, we just add the first-level bases in $\mathcal{B}$ to $\mathcal{C}_1$ and $\mathcal{H}_1$, then we have:
+Given $\bar{\mathcal{C}_1}$ and $\mathcal{B}$, we could apply the algorithm \verb+Resolution+. Since in Algorithm \ref{alg:res}, we just add the first-level bases in $\mathcal{B}$ to $\mathcal{C}_1$ and $\mathcal{H}_1$, then we have:
 
 \begin{align}
         \mathcal{C}_1 &= \{x_5x_6,x_4x_6,x_2x_5,x_1x_4,x_2x_3,x_1x_2,x_1x_3x_6,x_3x_4x_5,x_1x_3x_5\}\\
         \mathcal{H}_1 &= \{x_5x_6,x_4x_6,x_2x_5,x_1x_4,x_2x_3,x_1x_2,x_1x_3x_6,x_3x_4x_5,x_1x_3x_5\}
 \end{align}
 
-Notice that since there are some bases in the second level comes before the first level bases in the ordered list $\mathcal{B}$, we actually to first apply the algorithm on them before we apply the algorithm on the larger first-level bases. For example when we process the basis $x_5e_{1,2}$, the $\mathcal{C}_1$ we are using is $\{x_5x_6,x_4x_6,x_2x_5,x_1x_4,x_2x_3,x_1x_2\}$. However in this example, we don't have any bases in the second level that cannot be vanished using the smaller bases in the first-level. Similarly, we also have some bases from the third level appears before the second-level bases in the list. They are 
+Notice that since there are some bases in the second level that come before the first-level bases in the ordered list $\mathcal{B}$, we actually need to first apply the algorithm to them before applying the algorithm to the larger first-level bases. For example, when we process the basis $x_5e_{1,2}$, the $\mathcal{C}_1$ we are using is $\{x_5x_6,x_4x_6,x_2x_5,x_1x_4,x_2x_3,x_1x_2\}$. However, in this example, we do not have any bases in the second level that cannot be vanished using the smaller bases in the first level. Similarly, we also have some bases from the third level appearing before the second-level bases in the list. They are 
 \begin{equation}
-    x_5e_{2,6},\;x_5e_{2,7},\;x_4e_{2,7}
+    x_5e_{2,6},\;x_5e_{2,7}
 \end{equation}
 
-This is where we need to be especially careful with the order in the list, since they are using different $\mathcal{C}_2$ when they are compute. For $x_5e_{2,6}$, we have
+Here, we need to be especially careful with the order in the list, since they are using different $\mathcal{C}_2$ when they are computed. For $x_5e_{2,6}$, we have
 
 \begin{equation}
     \begin{aligned}
-        \mathcal{C}_2 = \{&x_5e_{1,2}-x_4e_{1,1},x_6e_{1,3}-x_2e_{1,1},x_6e_{1,4}-x_1e_{1,2},x_5e_{1,5}-x_3e_{1,3},x_4e_{1,6}-x_2e_{1,4},\\
-        & x_3e_{1,6}-x_1e_{1,5},x_6e_{1,8}-x_3x_4e_{1,1},x_5e_{1,7}-x_1x_3e_{1,1},x_6e_{1,9}-x_1x_3e_{1,1},\\
-        & x_4x_6e_{1,5}-x_2x_3e_{1,2},x_4e_{1,7}-x_1x_3e_{1,2},x_2e_{1,7}-x_1x_6e_{1,5},x_2e_{1,8}-x_4x_5e_{1,5},\\
-        & x_1e_{1,8}-x_3x_5e_{1,4},x_4e_{1,9}-x_3x_4e_{1,4},x_2x_5e_{1,4}-x_4x_5e_{1,6}\}
+        \mathcal{C}_2 = \{&x_5e_{1,2}-x_4e_{1,1},x_6e_{1,3}-x_2e_{1,1},x_6e_{1,4}-x_1e_{1,2},x_5e_{1,5}-x_3e_{1,3},x_5e_{1,6}-x_1e_{1,3},\\
+        & x_4e_{1,6}-x_2e_{1,4},x_3e_{1,6}-x_1e_{1,5},x_6e_{1,8}-x_3x_4e_{1,1},x_5e_{1,7}-x_1x_3e_{1,1},\\
+        & x_6e_{1,9}-x_1x_3e_{1,1},x_4x_6e_{1,5}-x_2x_3e_{1,2},x_4e_{1,7}-x_1x_3e_{1,2},x_2e_{1,7}-x_1x_6e_{1,5},\\
+        & x_2e_{1,8}-x_4x_5e_{1,5},x_1e_{1,8}-x_3x_5e_{1,4},x_4e_{1,9}-x_3x_4e_{1,4},x_2x_5e_{1,4}-x_4x_5e_{1,6}\}
     \end{aligned}
 \end{equation}
 
-Applying \verb+Reduce+ on $x_5e_{2,6}$ and the corresponding $\mathcal{C}_2$, we have 
-    
+Applying Algorithm \ref{alg:red} \verb+Reduce+ to $x_5e_{2,6}$ and the corresponding $\mathcal{C}_2$, we have $f,g$ to start with $f = -x_2x_5e_{1,4} + x_4x_5e_{1,6}$ and $g = x_5e_{2,6}$, since $\varphi(e_{2,6}) = -x_2e_{1,4}+x_4e_{1,6}$. Based on the term order on $k[x_1,x_2,x_3,x_4,x_5,x_6]$, $lm(f) = -x_2x_5e_{1,4}$. We have $lm(f) \in in\langle \mathcal{C}_2\rangle$, since $-x_2x_5e_{1,4} = (-1) \cdot x_2x_5e_{1,4}$. Therefore, in the first iteration of the while loop, we would get $h = x_2x_5e_{1,4}-x_4x_5e_{1,6}$, $f = 0$, and $g = x_5e_{2,6}+e_{2,17}$. Because $f = 0$, this pair $(f,g)$, would be input in the next step of Algorithm \ref{alg:res} \verb+Resolution+. Because $f = 0$, we could update $C_3$ and $H_3$ as follows.
+
+\begin{equation}
+    \begin{aligned}
+        \mathcal{C}_3 &= \{x_5e_{2,6}+e_{2,17}\}\\
+        \mathcal{H}_3 &= \{x_5e_{2,6}+e_{2,17}\}
+    \end{aligned}
+\end{equation}
 \section{Conclusion}
 
 \paragraph{  }
