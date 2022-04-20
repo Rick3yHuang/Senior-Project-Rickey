@@ -28,10 +28,16 @@
 \newcommand{\lm}{\ensuremath{\operatorname{LM}}}
 \newcommand{\lt}{\ensuremath{\operatorname{LT}}}
 \newcommand{\lc}{\ensuremath{\operatorname{LC}}}
+\newcommand{\coker}{\ensuremath{\operatorname{coker}}}
 \newcommand{\initTerm}{\ensuremath{\operatorname{in}}}
 \newcommand{\mingens}{\ensuremath{\operatorname{mingens}}}
+\newcommand{\lex}{\ensuremath{\operatorname{lex}}}
+\newcommand{\grlex}{\ensuremath{\operatorname{grlex}}}
+\newcommand{\grevlex}{\ensuremath{\operatorname{grevlex}}}
 \newcommand{\multideg}{\ensuremath{\operatorname{multideg}}}
 \renewcommand{\to}{\ensuremath{\rightarrow}}
+\newcommand{\onto}{\ensuremath{\twoheadrightarrow}}
+\newcommand{\into}{\ensuremath{\hookrightarrow}}
 
 \usepackage[
 backend=biber,
@@ -81,7 +87,54 @@ Schreyer resolution of a module is an exact sequence of modules, and computing t
 
 Before discussing the Schreyer resolution, the definition of Gröbner bases and syzygies should first be introduced, since they are the primary building blocks of the resolution. The Gröbner bases and syzygies are of importance to build the differentials connecting the free modules.
 
-\subsection{Gröbner Bases and Syzygies}
+\subsection{Gröbner Basis}
+
+Since we seek a basis for the polynomial ring with multiple variables, we want to define terms such as leading terms and leading monomials, so we need to understand the ordering of the monomials in $k[x_1,\cdots,x_n]$ for some field $k$.
+
+\begin{definition}[\textbf{Degree}]
+    Let $\gamma = (\gamma_1,\cdots, \gamma_n)$ be a vector in $\mathbb{Z}_{\geq 0}^n$, then $x^{\gamma} \in k[x_1,\cdots,x_n]$ represents $x_1^{\gamma_1}x_2^{\gamma_2}\cdots x_n^{\gamma_n}$. Then, we define the \textbf{degree} of a polynomial to be the sum of all components of the variables. For example, the degree of $x^{\gamma}$ is $\lvert (\gamma_1, \cdots, \gamma_n) \rvert = \gamma_1 + \cdots + \gamma_n$.
+\end{definition}
+
+\begin{definition}
+    For the polynomial ring $k[x_1,\cdots, x_n]$ with some field $k$, the order one the variables is defined as
+    \begin{equation}
+        x_1 > x_2 > \cdots > x_n
+    \end{equation}
+\end{definition}
+
+By convention, we always write the variables in a monomial and the monomials in a polynomial in descending order.  Next, we introduce three monomial term orders in the following.
+
+\begin{definition}[\textbf{Lexicographic (Lex) Order}]
+    Let $\alpha = (\alpha_1, \cdots, \alpha_n)$ and $\beta = (\beta_1,\cdots,\beta_n)$ be in $\mathbb{Z}_{\geq 0}^{n}$. We say $\alpha >_{\lex} \beta$ if the leftmost nonzero entry of the vector difference $\alpha - \beta \in \mathbb{Z}^n$ is positive. We will write $x^{\alpha} >_{\lex} x^{\beta}$ if $\alpha >_{\lex} \beta$.
+\end{definition}
+
+\begin{definition}[\textbf{Graded Lex (GrLex) Order}]
+    Let $\alpha,\beta \in \mathbb{Z}_{\geq 0}^{n}$. We say $\alpha >_{\grlex} \beta$ if
+    \begin{equation}
+        \lvert \alpha \rvert = \sum_{i = 1}^{n}{\alpha_i} > \lvert \beta \rvert = \sum_{i = 1}^{n}{\beta_i} \text{, or } \lvert \alpha \rvert = \lvert \beta \rvert \text{ and } \alpha >_{\lex} \beta
+    \end{equation}
+\end{definition}
+
+\begin{example}
+    $x_{1}^2x_{2}^{5}x_{3} >_{\grlex} {x_{1}}x_3^{3}$ since for the coefficient tuples $\lvert (2,5,1) \rvert = 8 > \lvert (1,0,3) \rvert = 4$, then $(2,5,1) >_{\grlex} (1,0,3)$. 
+    
+    $x_1^5x_2x_3^2 >_{\grlex} x_1x_2^{3}x_3^4$ since for the coefficient tuple $\lvert (5,1,2) \rvert = \lvert (1,3,4) \rvert = 8$, and $(5,1,2) - (1,3,4) = (4,-2,-2)$, then $(5,1,2) >_{\grlex} (1,3,4)$.
+\end{example}
+
+\begin{definition}[\textbf{Graded Reverse Lex (DegRevLex) Order}]
+    Let $\alpha,\beta \in \mathbb{Z}_{\geq 0}^{n}$. We say $\alpha >_{\grevlex} \beta$ if 
+    \begin{equation}
+        \lvert \alpha \rvert = \sum_{i = 1}^{n}{\alpha_i} > \lvert \beta \rvert = \sum_{i = 1}^{n}{\beta_i} \text{, or } \lvert \alpha \rvert = \lvert \beta \rvert \text{ and the rightmost nonzero entry of } \alpha  - \beta \in \mathbb{Z}^n \text{ is negative.}
+    \end{equation}
+\end{definition}
+
+\begin{example}
+    $x_{1}^2x_{2}^{5}x_{3} >_{\grevlex} x_{1}x_3^{3}$ since for the coefficient tuples $\lvert (2,5,1) \rvert = 8 > \lvert (1,0,3) \rvert = 4$, then $(2,5,1) >_{\grevlex} (1,0,3)$. 
+    
+    $x_1^5x_2x_3^2 >_{\grevlex} x_1x_2^{3}x_3^4$ since for the coefficient tuple $\lvert (5,1,2) \rvert = \lvert (1,3,4) \rvert = 8$, and $(5,1,2) - (1,3,4) = (4,-2,-2)$, then $(5,1,2) >_{\grevlex} (1,3,4)$.
+\end{example}
+
+We choose to use the \verb+DegRevLex+ order for anywhere need the monomial term order in a polynomial ring in this paper because of the nice properties of the \verb+DegRevLex+ order for computer to do the computation. With the well-defined monomial ordering, we could define the basis with a nice property in describe the polynomial in an ideal: the Gröbner basis.
 
 \begin{definition}[\textbf{Gröbner Basis}]\cite{cox_grobner_2015}\label{def:gb}
     Fix a monomial order on the polynomial ring $k[x_1, \cdots, x_n]$. A finite subset $G = \{g_1, \cdots, g_t\}$ of an ideal $I \subseteq k[x_1, \cdots, x_n]$ different from $\{0\}$ is said to be \textbf{Gröbner basis} (or \textbf{standard basis}) of $I$ if
@@ -117,7 +170,7 @@ The uniqueness of the remainder can easily be checked by the division algorithm.
         \text{For } G_2 \text{: } f &= x\cdot(y-z) + z\cdot (x+z) - z^2
 \end{align}
 
-one could see that even though the remainders are the same, the quotient are different with two different bases. The second and third properties could be proved following the definition of Gröbner basis, since $\langle \lt(I) \rangle \subseteq \langle \lt(g_1),\cdots, \lt(g_s) \rangle$.
+One could see that even though the remainders are the same, the quotients are different with two different bases. The second and third properties could be proved following the definition of Gröbner basis, since $\langle \lt(I) \rangle \subseteq \langle \lt(g_1),\cdots, \lt(g_s) \rangle$.
 
 
 \begin{remark}
@@ -140,7 +193,7 @@ For the convenience and efficiency of the computation, we always want our Gröbn
     The \textbf{reduced} Gröbner basis is a Gröbner basis $G$ for $I$ such that:
     \begin{itemize}
         \item $\lc(p) = 1$ for all $p \in G$
-        \item For all $p \in G$, none of monomial in $p$ lies in $\langle \lt(G\backslash\{p\})\rangle$
+        \item For all $p \in G$, none of the monomials in $p$ lies in $\langle \lt(G\backslash\{p\})\rangle$
     \end{itemize}
 \end{definition}
 
@@ -148,7 +201,9 @@ For the convenience and efficiency of the computation, we always want our Gröbn
     Let $\{xy+yz,yz+xyz\}$ be a Gröbner basis of $I \in \mathbb{Q}[x,y,z]$, $\{xy+yz,yz+xyz\}$ is a minimal Gröbner basis, but it is not a reduced Gröbner basis. If we further reduced it, we could obtain $\{xy,yz\}$, which is a reduced Gröbner basis.
 \end{example}
 
-Because Gröbner basis has such a pleasant property of describing polynomials with linear combination of basis elements and a unique remainder, it would be nice for one to know how to compute the Gröbner basis of an ideal in an efficient way,so we introduce Buchberger's algorithm. However, we first need some more definitions to understand the algorithm. We define the least common multiple monomials the following way.
+\subsection{Syzygy}
+
+Because Gröbner basis has such a pleasant property of describing polynomials with linear combination of basis elements and a unique remainder, it would be nice for one to know how to compute the Gröbner basis of an ideal in an efficient way,so we introduce Buchberger's algorithm. However, we first need some more definitions to understand the algorithm. First, we need to define the $S$-polynomial and syzygy.
 
 \begin{definition}[\textbf{Least Common Multiple}]
     Let $f, g \in k[x_1, \cdots, x_n]$ be nonzero polynomials such that $multideg(f) = \alpha$ and $multideg(g) = \beta$, then let $\gamma = (\gamma_1, \cdots, \gamma_n)$, where $\gamma_i = max(\alpha_i,\beta_i)$. Then $x^{\gamma}$ is the least common multiple of $LM(f)$ and $LM(g)$, that is, $x^{\gamma} = lcm(\lm(f), \lm(g))$.
@@ -189,6 +244,8 @@ As what $\tfrac{x^{\gamma}}{\lt(f)}$ and $\tfrac{x^{\gamma}}{\lt(g)}$ do in the 
 %\end{lemma}
 
 %\textcolor{BrickRed}{include the proof later}
+
+\subsection{Buchberger's Algorithm}
 
 \paragraph{}
 
@@ -237,67 +294,63 @@ It is sufficient to show that the algorithm ends in finite steps. To prove that 
 
 The proof of Theorem \ref{thm:buchCriter} could be referred to the proof of Theorem 7 of Chapter $2 \;\S5$ of Cox, Little, and O'Shea's book \cite{cox_grobner_2015}. 
 
-since for each iteration, we have $G' \subseteq G$, then $\langle \lt(G') \rangle \subseteq \langle \lt(G) \rangle$. Let $G_0 = F$, and if we keep track of $G$ from each iteration and label them as $G_1, G_2, \cdots$, then we have an ascending chain of ideals $\langle \lt(G_0) \rangle \subseteq \langle \lt(G_1) \rangle \subseteq \langle \lt(G_2) \rangle \subseteq \cdots$. Therefore, applying ACC, we know that $\exists N \geq 1$ such that $\langle \lt(G_{N}) \rangle = \langle \lt(G_{N+1}) \rangle = \langle \lt(G_{N+2}) \rangle = \cdots$. This shows that the algorithm ends at some point with a finite number of steps.
+Since for each iteration, we have $G' \subseteq G$, then $\langle \lt(G') \rangle \subseteq \langle \lt(G) \rangle$. Let $G_0 = F$, and if we keep track of $G$ from each iteration and label them as $G_1, G_2, \cdots$, then we have an ascending chain of ideals $\langle \lt(G_0) \rangle \subseteq \langle \lt(G_1) \rangle \subseteq \langle \lt(G_2) \rangle \subseteq \cdots$. Therefore, applying ACC, we know that $\exists N \geq 1$ such that $\langle \lt(G_{N}) \rangle = \langle \lt(G_{N+1}) \rangle = \langle \lt(G_{N+2}) \rangle = \cdots$. This shows that the algorithm ends at some point with a finite number of steps.
 \end{proof}
 
 \begin{remark}
     The Buchberger's algorithm only produces a Gröbner Basis which is not unique, and it might include redundancy. The Gröbner basis produced by the algorithm is not necessarily a reduced Gröbner basis, since we only check the leading terms of the polynomials using the $S$-polynomials instead of checking for every monomial in the polynomials. Moreover, it even does not promise a minimal Gröbner basis. For example, when we input Algorithm \ref{alg:bc} with $F$, which is already a Gröbner basis with redundancy, which means that there is at least one polynomial $p \in F$ such that $\lt(p) \in \langle \lt(F\backslash \{p\}) \rangle$, the algorithm would output $G = F$ directly by Theorem \ref{thm:buchCriter}, which is not minimal by definition.
 \end{remark}
 
-\section{Schreyer Frame and Schreyer Resolution}
-
-\paragraph{}
-
-Before introducing the Schreyer resolutions and their frames, we need to first define the following terms in rings, vector spaces, and modules.
-
-\begin{definition}[\textbf{Power Product}]
-    Let $S = K[x_1,\cdots, x_n]$ be a polynomial ring with a term order $>$ over a field $K$. A \textbf{power product} $t$ (or monomial of $S$) is $t = x_1^{\alpha_1}\cdots x_n^{\alpha_n} \in S$, where $\alpha_1, \cdots, \alpha_n$ are non-negative integers.
-\end{definition}
-
-With this definition, we could uniquely write every nonzero element $f \in S$ as 
-\begin{equation}
-    f = c_1\cdot m_1 + \cdots + c_l\cdot m_l
-\end{equation}
-where for $i = 1, \cdots, l$, $c_i \in K$ and are non-zero, and $m_i$ are monomials such that $m_1 > m_2 > \cdots > m_l$. In addition, we define the leading coefficient of $f \in S$ to be $lc(f) = c_1$, and the leading monomial of $f$ to be $lm(f) = m_1$.
+\subsection{Vector Space Spanned by the leading monomials}
 
 \paragraph{}
 
 In the next definition, we define a way to build vector spaces using subsets of the ideal $S$.
 
 \begin{definition}
-    Let $S = K[x_1,\cdots, x_n]$ be a polynomial ring with a term order $>$ over a field $K$. For any set $G \subseteq S$, we let $in(G)$ denote the \textbf{$K$-vector space spanned by the monomials} $\{lm(f):f \in G\}$.
+    Let $S = k[x_1,\cdots, x_n]$ be a polynomial ring with a term order $>$ over a field $k$. For any set $G \subseteq S$, we let $\initTerm(G)$ denote the \textbf{$k$-vector space spanned by the monomials} $\{\lm(f):f \in G\}$.
 \end{definition}
 
 \paragraph{}
 
-Because $R = K[x_1,\cdots,x_n]$, the scalar multiples of $in(G)$ is well-defined. Since the monomials of $G$ are in $R$, and $R$ is a polynomial ring, $in(G)$ indeed defines a $K$-vector space.
+Because $R = k[x_1,\cdots,x_n]$, the scalar multiples of $in(G)$ are well defined. Since the monomials of $G$ are in $R$ and $R$ is a polynomial ring, $in(G)$ indeed defines a $k$-vector space, and this is indeed a monomial ideal generated by the leading terms of elements in $G$.
 
 \begin{prop}
-    Let $S$ be defined as the above. If $J \subset S$ is an ideal, then $in(J) \subset S$ is the monomial ideal generated by the lead terms of $J$
+    Let $S = k[x_1,\cdots, x_n]$ be a polynomial ring with a term order $>$ over a field $k$, $J \subset S$ and ideal and $R = S/J$ be a factor ring of $S$. Let $N$ denote the $k$-vector space spanned by the set of standard monomials of $R$, that is, the set of monomials of $S$ not in $in(J)$. Any element $f \in R$ can be written uniquely as the image of an element $g \in N$, and we set $lc(f) = lc(g)$ and $lm(f) = lm(g) \in N$. Thus, $N = \initTerm(R)$ and $in(S) = N \bigoplus \initTerm(J)$, as $k$-vector spaces.
 \end{prop}
 
 \begin{proof}
-    
+    Let $m \in \initTerm(S)$, then let $m = \sum_{i = 1}^{l}{q_i\cdot \lm(s_i)}$ for $q_i \in k$ and $s_i \in S$. Suppose that in $\{\lm(s_1),\cdots,\lm(s_l)\}$, there are $p$ of them in $\initTerm(J)$. Then, by relabeling $s_i's$, we have $m = \sum_{i = 1}^{p}{q_i \cdot \lm(s_i)} + \sum_{j = p+1}^{l}{q_j\cdot \lm(s_j)}$ for $\lm(s_i) \in \initTerm(J)$ and $\lm(s_j) \in S\backslash J$. Let $u = \sum_{i = 1}^{p}{q_i \cdot \lm(s_i)}$ and $v = \sum_{j = p+1}^{l}{q_j\cdot \lm(s_j)}$. Then, by definition, $u \in \initTerm(J)$, $v \in N$, and $m = u + v$. Since we choose $m$ arbitrarily and $u,v$ to be unique by construction, we know that $in(S) = N \bigoplus \initTerm(J)$.
 \end{proof}
 
-\begin{prop}
-    Let $R = S/J$ be a factor ring of $S$. Let $N$ denote the $K$-vector space spanned by the set of standard monomials of $R$, that is, the set of monomials of $S$ not in $in(J)$. Any element $f \in R$ can be written uniquely as the image of an element $g \in N$, and we set $lc(f) = lc(g)$ and $lm(f) = lm(g) \in N$. Thus, $N = in(R)$, and $in(S) = N \bigoplus in(J)$, as $K$-vector spaces.
-\end{prop}
-
-\begin{proof}
-    
-\end{proof}
+\section{Schreyer Frame and the Corresponding Schreyer Resolution}
 
 \paragraph{}
 
-With such a factor ring, we could build a free module from the ring, and we define the elements and the term orders on the elements of the newly constructed module $F$ as the following.
+Before introducing the Schreyer resolutions and their frames, we need to first define the following terms in rings, and modules.
+
+\begin{definition}[\textbf{Power Product}]
+    Let $S = k[x_1,\cdots, x_n]$ be a polynomial ring with a term order $>$ over a field $k$. A \textbf{power product} $t$ (or monomial of $S$) is $t = x_1^{\alpha_1}\cdots x_n^{\alpha_n} \in S$, where $\alpha_1, \cdots, \alpha_n$ are non-negative integers.
+\end{definition}
+
+With this definition, we could uniquely write every nonzero element $f \in S$ as 
+\begin{equation}
+    f = c_1\cdot m_1 + \cdots + c_l\cdot m_l
+\end{equation}
+where for $i = 1, \cdots, l$, $c_i \in k$ and are nonzero, and $m_i$ are monomials such that $m_1 > m_2 > \cdots > m_l$. In addition, we define the leading coefficient of $f \in S$ to be $lc(f) = c_1$, and the leading monomial of $f$, $\lm(f) = m_1$.
+
+\subsection{Free Module over A Factor Ring}
+
+\paragraph{}
+
+With such a factor ring, we could build a free module from the ring, and we define the elements and the term orders on the elements of the newly constructed module $F$ as follows.
 
 \begin{definition}[\textbf{Monomials of a Module}]
     Let $F$ be a free module over $R$, and let $\hat{F}$ be the free $S$-module with the same rank as $F$ and corresponding basis. A \textbf{monomial} of $F$ is, by definition, any element $m = t \cdot e$, where $t \in N$ is a standard monomial and $e$ is any element of the canonical basis of $\hat{F}$.
 \end{definition}
 
 \begin{definition}[\textbf{Term order on a Free Module}]
-    The term order on a free module $F$ over $K$ (a total order on the monomials of $F$) such that:
+    The term order on a free module $F$ over $k$ (a total order on the monomials of $F$) such that:
     \begin{itemize}
         \item if $m <_F n$, then $t\cdot m <_F t \cdot n$;
         \item if $s <_S t$, then $s\cdot e <_F t \cdot e$;
@@ -305,12 +358,13 @@ With such a factor ring, we could build a free module from the ring, and we defi
     for all $m, n$ monomials of $F$, $s,t$ power products in $S$, and $e$ any basis element of $F$.
 \end{definition}
 
-\subsection{Gröbner Bases for Modules}  
-\begin{itemize}
-    \item $\{g_1, \cdots, g_s\} \subset I\subset F$ is a Gröbner basis of the $R$-module I, if $\{lm(g_1), \cdots, lm(g_s)\}$ generates $in(I)$, that is, every monomial in $in(I)$ is divisible by some $lm(g_i)$.
-    \item auto-reduced Gröbner basis: every lead monomial $lm(g_i)$ divides no monomial occurring in any $g_j$ other than itself
-    \item irredundant Gröbner basis: $in(I)$ is minimally generated by $\{lm(g_1), \cdots, lm(g_s)\}$, which in turn means that this set generates $in(I)$, and no lead term $lm(g_i)$ divides any $lm(g_j)$ for $j \neq i$
-\end{itemize}
+\paragraph{}
+
+Using the $k$-vector space spanned by leading monomials of elements of a subset of and ideal, we could define the Gröbner basis of a free module in a different way. We define that $\{g_1, \cdots, g_s\} \subset I\subset F$ is a Gröbner basis of the $R$-module $I$, if $\{lm(g_1), \cdots, lm(g_s)\}$ generates $in(I)$, that is, every monomial in $in(I)$ is divisible by some $lm(g_i)$.
+
+\subsection{Free Resolution}
+
+As the main structure of the resolutions and frames, complex and exact sequences must first be defined.
 
 \begin{definition}[\textbf{Complex and Exactness}]
     Let $\Phi = \{\varphi_n : A_n \to A_{n-1}\}$ be a sequence of homomorphisms of $R$-modules for $n \in \mathbb{Z}$: 
@@ -318,25 +372,110 @@ With such a factor ring, we could build a free module from the ring, and we defi
         \Phi : \cdots \to A_{n+1} \xrightarrow{\varphi_{n+1}} A_n \xrightarrow{\varphi_n} A_{n-1} \to \cdots 
     \end{equation}
     Then, $\Phi$ is a \textbf{complex} if $\forall n \in \mathbb{Z}$, $\im \varphi_{n+1} \subseteq \ker \alpha_n$.  If $\im \varphi_{i+1} = \ker \varphi_i$, $\Phi$ is \textbf{exact} in (homological) degree $i$.  If $\Phi$ is exact
-    in every homological degree, we say that $\Phi$ is exact.  If $\Phi$ is exact in every homological degree except 0, then we say $\Phi$ is \textbf{acyclic}.
+    in every homological degree, we say that $\Phi$ is exact.  If $\Phi$ is exact at every homological degree except 0, then we say $\Phi$ is \textbf{acyclic}.
 \end{definition}
 
-Let $R = S/J$ be the factor ring as previously defined, and let $F_i$ be free $R$-modules with a given (canonical) basis $\varepsilon_{i}$ of $\hat{F_i}$, and $M = F_0/I$.  A \textbf{free resolution} of $M$ is an acyclic complex of free $R$-modules:
+Then, we could introduce the definition of the free resolution.
 
-\begin{equation}
-    \Phi: \cdots \rightarrow F_l \xrightarrow{\varphi_l} F_{l-1} \xrightarrow{\varphi_{l-1}} \cdots \xrightarrow{\varphi_1} F_0
+\begin{definition}[\textbf{Free Resolution}]
+    Let $R = S/J$ be the factor ring as previously defined, and let $F_i$ be free $R$-modules with a given (canonical) basis $\mathcal{E}_{i}$ of $\hat{F_i}$ and $M = F_0/I$.  A \textbf{free resolution} of $M$ is an acyclic complex of free $R$-modules:
+
+    \begin{equation}
+        \Phi: \cdots \rightarrow F_l \xrightarrow{\varphi_l} F_{l-1} \xrightarrow{\varphi_{l-1}} \cdots \xrightarrow{\varphi_1} F_0
+    \end{equation}
+    
+    Define $\mathcal{C}_i = \varphi_i(\mathcal{E}_i)$ as the image of the given basis and define the level of an element $f$ in $C_i$ as $lev(f) = i$.
+\end{definition}
+
+\begin{prop}
+    To (theoretically) construct a free resolution, we first choose a (finite) generating set of $M$, which gives a surjection $F_0 \onto M$ where $F_0$ is a finite rank free $R$-module. The kernel of this map $K_1$ is again a finitely generated $R$-module because $R$ is Noetherian. So we get a short exact sequence 
+    \begin{equation}
+        0 \into K_1 \into F_0 \onto M \to 0
+    \end{equation}
+    where $K_1$ is a finitely generated $R$-module.  We may now repeat this process: choose a finite generating set of $K_1$, which gives an onto map $\varphi_1': F_1 \to K_1$, where $F_0$ is again a finitely rank free $R$-module, which in turn gives rise to a short exact sequence
+    \begin{equation}
+        0 \into K_2 \into F_1 \onto K_1 \to 0.
+    \end{equation}
+    where $K_2$ is the kernel of the map Also, since the composition $\varphi_1: F_1 \to F_0$ is a homomorphism between finite rank free $R$-modules, it may be represented by a matrix of finite size. Continuing this process, we fit all these short exact sequences into an exact complex of modules as in the following diagram, and this is a free resolution of $M$.
+    \begin{equation}
+        \xymatrix@C=1pc@R=1pc{
+            &            &       &       &       &      &       &     &K_2 \ar@{^{(}->}[dr]^{\iota_2}\\
+            &       &\cdots \ar[r]       &F_{l} \ar@{->>}[dr]_{\varphi_{l}'} \ar[rr]^{\varphi_{l}}&       &F_{l-1} \ar[r]^{\varphi_{l-1}}&\cdots \ar[r]^{\varphi_3}&F_2 \ar@{->>}[ur]^{\varphi_2'} \ar[rr]^{\varphi_2}&       &F_1 \ar@{->>}[dr]_{\varphi_1'} \ar[rr]^{\varphi_1} &         &  F_0 \ar@{->>}[r] & M \ar[r] & 0\\
+            &        &       &       & K_{l} \ar@{^{(}->}[ur]_{\iota_{l}}        &        &        &      &       &       & K_1 \ar@{^{(}->}[ur]_{\iota_1}  &       &       & \\
+        }
 \end{equation}
+\end{prop}
 
-Define $\mathcal{C}_i = \varphi_i(\varepsilon_i)$ as the image of the given basis and define the level of an element $f$ in $C_i$ to be $lev(f) = i$.
+\begin{proof}
+    To prove that this construction gives us a free resolution, we need to show that this sequence is exact at every homological degree except $0$. Since by construction, $K_2$ is the kernel of the map $\varphi_1: F_1 \onto F_0$, then $K_2 \subseteq F_1$ and $\iota_2: K_2 \into F_1$ is an inclusion. Therefore, the composition $\varphi_2 = \iota_2 \circ \varphi_2' = \varphi_2'$ satisfies $\im \varphi_2 = \im \varphi_2' = K_2 = \ker \varphi_1$ since $\varphi_2'$ is an onto map sending to $K_2$. Thus, the sequence is exact at degree $1$. Suppose the sequence is exact at degree $t$, then $F_t \to K_t$ must defines an onto map, and by construction, we have the short exact sequence, 
+    \begin{equation}
+        0 \into K_{t+1} \into F_t \onto K_t \to 0
+    \end{equation}
+    where $K_{t+1}, F_t,$ and $K_t$ are all finitely generated free $R$-modules, and $K_{t+1}$ is the kernel of the map $F_{t} \onto K_t$. Next, we could construct a finitely generated free $R$-module $F_{t+1}$ such that there is an onto map $\varphi_{k+1}: F_{t+1} \onto K_{t+1}$. Then the function composition gives us $\varphi_{t+1} = \iota_{t+1} \circ \varphi_{t+1}' = \varphi_{t+1}'$, and $\varphi_{t+1}$ sends $F_{t+1}$ to $F_t$. Hence, $\im \varphi_{t+1} = \im \varphi_{t+1}' = K_{t+1} = \ker \varphi_{t}$. Therefore, the sequence is exact at level $t+1$. Thus, by induction, we know that whole sequence is an acyclic complex, so it is a free resolution.
+\end{proof}
 
-\textcolor{BrickRed}{Discuss how to (theoretically) find a free resolution}.
+\paragraph{}
 
-$$
-\xymatrix@C=1pc@R=1pc{
-F_1 \ar@{->>}[dr] \ar[rr]^{\varphi_1} &                      &  F_0 \ar[r] & M \ar[r] & 0\\
-            & K_0 \ar@{^{(}->}[ur]  &             &          & \\
-}
-$$
+When we are trying to practically compute the free resolution following the construction above, one might encounter a problem of computing the kernels of matrix over a polynomial ring, which. in this case, a factor ring $R$. This is why the technique of Gröbner basis are useful here. To be more specific, we could first find the Gröbner basis of the domain of each $\varphi$ ("row reduce" the matrix over the polynomial ring, i.e. the differential) and then compute a syzygy of the Gröbner basis (find a "vector" in the "null space" of the matrix), which is the kernel we want.
+
+\begin{remark}
+    
+\end{remark}
+
+With a free resolution, we define the term ordering on it with the term ordering on the module.
+
+\begin{definition}[\textbf{Term Ordering on Free Resolution}]
+    Let $\tau = \{\tau_i\}$ be a sequence of term ordering on the modules $F_i$. We call $\tau$ a \textbf{term ordering on $\Phi$} if it satisfies the following compatibility relationship:
+    \begin{equation}
+        s \cdot e_1 <_{\tau_i} t\cdot e_2 \text{ whenever } s \cdot \lm(\varphi_i(e_1)) <_{\tau_{i-1}} t \cdot \lm(\varphi_i(e_2))
+    \end{equation}
+    where $e_1$ and $e_2$ are elements of $\mathcal{E}_i$.
+\end{definition}
+
+To describe the resolution $\Phi$, we define the initial terms of $\Phi$, $\Xi$ as follows.
+
+\begin{definition}[\textbf{Initial Term of A Resolution}]
+    Given $\Phi$ as previously described and a term ordering $\tau$ on $\Phi$, define the \textbf{initial terms} of $\Phi$, $\initTerm(\Phi)$, as the sequence of (graded) $R$-homomorphisms:
+    \begin{equation}
+        \Xi = \initTerm(\Phi): \cdots \to F_l \xrightarrow{\xi_l} F_{l-1} \xrightarrow{\xi_{l-1}} \cdots \xrightarrow{\xi_2} F_1 \xrightarrow{\xi_1} F_0
+    \end{equation}
+    where $\xi_i(e) = \lm(\varphi_i(e))$, for all $e$ in $\mathcal{E}_i$. That is, the differentials in $\initTerm(\Phi)$ are obtained by taking the leading monomials of each entry in the differentials in $\Phi$.
+\end{definition}
+
+\begin{remark}
+    Since the homomorphisms defined in $\Xi$ are $\xi_i(e) = \lm(\varphi_i(e))$, the compatibility relationship is satisfied.
+    \begin{equation}
+        \begin{aligned}
+            \lm(s) \cdot e_1 <_{\tau_i} \lm(t) \cdot e_2 \text{ whenever } & \lm(s) \cdot \lm(\xi_i(e_1)) <_{\tau_{i-1}} \lm(t) \cdot \lm(\xi_i(e_2))\\
+                                                                           &\Leftrightarrow \lm(s) \cdot \lm(\lm(\varphi_i(e_1))) <_{\tau_{i-1}} \lm(t) \cdot \lm(\lm(\varphi_i(e_2)))\\
+                                                                           &\Leftrightarrow \lm(s) \cdot \lm(\varphi_i(e_1)) <_{\tau_{i-1}} \lm(t) \cdot \lm(\varphi_i(e_2))
+        \end{aligned}
+    \end{equation}
+    where $e_1$ and $e_2$ are elements of $\mathcal{E}_i$. Thus, the term ordering of $\Xi$ is also $\tau$.
+\end{remark}
+
+As for the Schreyer resolution, it is a free resolution with some restrictions.
+
+\begin{definition}[\textbf{Schreyer Resolution}]
+    A \textbf{Schreyer resolution} of an $R$-module $M = F_0/I$ is an exact sequence:
+    \begin{equation}
+        \Phi: \cdots \rightarrow F_l \xrightarrow{\varphi_l} F_{l-1} \xrightarrow{\varphi_{l-1}} \cdots \xrightarrow{\varphi_1} F_0
+    \end{equation}
+    , such that:
+    \begin{itemize}
+        \item $\coker(\varphi_1) = M$
+        \item There is a term ordering $\tau$ on $\Phi$
+        \item $\varphi_i(\mathcal{E}_i)$ forms a minimal Gröbner basis of $\im \varphi_i = \ker \varphi_{i-1}$ (for all i where $F_i \neq 0$)
+    \end{itemize}
+\end{definition}
+
+%With these properties of the Schreyer resolution, we can theoretically %compute the Schreyer resolution using the diagram below.
+
+
+
+%We could find the kernel of homomorphism $F_0 \to M$, $K_0$. Because 
+%$\coker(\varphi_1) = M$, $K_0 = \im \varphi_1$.
+
 
 \textcolor{BrickRed}{How to practically find a free resolution: via the Schreyer frame}
 
@@ -344,9 +483,9 @@ $$
 \begin{lemma}\label{lem:mingens}
     $in(ker\xi_i)$ is minimally generated by
     \begin{equation}
-        \bigcup_{e\in{\varepsilon}_{i-1}}{\bigcup_{j = 2}^{r}{mingens((in(J),t_1,\cdots,t_{j-1}):t_j)\cdot \epsilon_j}}
+        \bigcup_{e\in{\mathcal{E}}_{i-1}}{\bigcup_{j = 2}^{r}{mingens((in(J),t_1,\cdots,t_{j-1}):t_j)\cdot \epsilon_j}}
     \end{equation}
-    where $\varepsilon_i(e) = \{\epsilon_1,\cdots,\epsilon_r\}$
+    where $\mathcal{E}_i(e) = \{\epsilon_1,\cdots,\epsilon_r\}$
     \textcolor{BrickRed}{edit more}
 \end{lemma}
 
