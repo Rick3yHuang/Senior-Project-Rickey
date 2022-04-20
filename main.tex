@@ -89,7 +89,7 @@ Before discussing the Schreyer resolution, the definition of Gröbner bases and 
 
 \subsection{Gröbner Basis}
 
-Since we seek a basis for the polynomial ring with multiple variables, we want to define terms such as leading terms and leading monomials, so we need to understand the ordering of the monomials in $k[x_1,\cdots,x_n]$ for some field $k$.
+Since we seek for a basis for the polynomial ring with multiple variables, we want to define terms such as leading terms and leading monomials, so we need to understand the ordering of the monomials in $k[x_1,\cdots,x_n]$ for some field $k$.
 
 \begin{definition}[\textbf{Degree}]
     Let $\gamma = (\gamma_1,\cdots, \gamma_n)$ be a vector in $\mathbb{Z}_{\geq 0}^n$, then $x^{\gamma} \in k[x_1,\cdots,x_n]$ represents $x_1^{\gamma_1}x_2^{\gamma_2}\cdots x_n^{\gamma_n}$. Then, we define the \textbf{degree} of a polynomial to be the sum of all components of the variables. For example, the degree of $x^{\gamma}$ is $\lvert (\gamma_1, \cdots, \gamma_n) \rvert = \gamma_1 + \cdots + \gamma_n$.
@@ -397,7 +397,7 @@ Then, we could introduce the definition of the free resolution.
         0 \into K_2 \into F_1 \onto K_1 \to 0.
     \end{equation}
     where $K_2$ is the kernel of the map Also, since the composition $\varphi_1: F_1 \to F_0$ is a homomorphism between finite rank free $R$-modules, it may be represented by a matrix of finite size. Continuing this process, we fit all these short exact sequences into an exact complex of modules as in the following diagram, and this is a free resolution of $M$.
-    \begin{equation}
+    \begin{equation}\label{eqn:16}
         \xymatrix@C=1pc@R=1pc{
             &            &       &       &       &      &       &     &K_2 \ar@{^{(}->}[dr]^{\iota_2}\\
             &       &\cdots \ar[r]       &F_{l} \ar@{->>}[dr]_{\varphi_{l}'} \ar[rr]^{\varphi_{l}}&       &F_{l-1} \ar[r]^{\varphi_{l-1}}&\cdots \ar[r]^{\varphi_3}&F_2 \ar@{->>}[ur]^{\varphi_2'} \ar[rr]^{\varphi_2}&       &F_1 \ar@{->>}[dr]_{\varphi_1'} \ar[rr]^{\varphi_1} &         &  F_0 \ar@{->>}[r] & M \ar[r] & 0\\
@@ -416,13 +416,11 @@ Then, we could introduce the definition of the free resolution.
 
 \paragraph{}
 
-When we are trying to practically compute the free resolution following the construction above, one might encounter a problem of computing the kernels of matrix over a polynomial ring, which. in this case, a factor ring $R$. This is why the technique of Gröbner basis are useful here. To be more specific, we could first find the Gröbner basis of the domain of each $\varphi$ ("row reduce" the matrix over the polynomial ring, i.e. the differential) and then compute a syzygy of the Gröbner basis (find a "vector" in the "null space" of the matrix), which is the kernel we want.
+When we are trying to practically compute the free resolution following the construction above, one might encounter a problem of computing the kernels of matrix over a polynomial ring, which. in this case, a factor ring $R$. This is why the technique of Gröbner basis are useful here. To be more specific, we could first find the Gröbner basis of each $K_i$ ("row reduce" the matrix over the polynomial ring, i.e. finding the differential) and then compute a ordered set of polynomials that are multiplied with the basis and summed to zero like what a syzygy does (find a "vector" in the "null space" of the matrix), which is the kernel we want.
 
 \begin{remark}
-    
+    In the construction above only defines ordering on each free $R$-modules $F_i$, there is not a well-defined ordering on the whole resolution. Thus, we define a term ordering on the free resolution.
 \end{remark}
-
-With a free resolution, we define the term ordering on it with the term ordering on the module.
 
 \begin{definition}[\textbf{Term Ordering on Free Resolution}]
     Let $\tau = \{\tau_i\}$ be a sequence of term ordering on the modules $F_i$. We call $\tau$ a \textbf{term ordering on $\Phi$} if it satisfies the following compatibility relationship:
@@ -454,7 +452,7 @@ To describe the resolution $\Phi$, we define the initial terms of $\Phi$, $\Xi$ 
     where $e_1$ and $e_2$ are elements of $\mathcal{E}_i$. Thus, the term ordering of $\Xi$ is also $\tau$.
 \end{remark}
 
-As for the Schreyer resolution, it is a free resolution with some restrictions.
+In order to practically compute a free resolution for a free module over a polynomial ring, we need to use the Gröbner basis, and if we use the Gröbner basis to compute the kernel connecting the whole resolution, we are actually creating a Schreyer resolution. We define the Schreyer resolution as the following. A Schreyer resolution is a free resolution with some restrictions.
 
 \begin{definition}[\textbf{Schreyer Resolution}]
     A \textbf{Schreyer resolution} of an $R$-module $M = F_0/I$ is an exact sequence:
@@ -469,81 +467,77 @@ As for the Schreyer resolution, it is a free resolution with some restrictions.
     \end{itemize}
 \end{definition}
 
+\paragraph{}
+
+Because a Schreyer resolution requires $\varphi_i(\mathcal{E}_i)$ to be a Gröbner basis, we want to focus on the initial term of the Schreyer resolution more. Therefore, we introduce the following definition of Schreyer frame, which is a similar term as the initial terms of a resolution in the Schreyer case.
+
+\begin{definition}[\textbf{Schreyer Frame}]
+    A \textbf{Schreyer frame} of $M = F_0/I$ is a sequence of $R$-homomophisms:
+    \begin{equation}
+        \Xi: \cdots \to F_1 \xrightarrow{\xi_l} F_{l-1} \xrightarrow{\xi_{l-1}} \cdots \xrightarrow{\xi_2} F_1 \xrightarrow{\xi_1} F_0
+    \end{equation}
+    where each column is a monomial, and a term ordering on $\Xi$ such that:
+    \begin{itemize}
+        \item $\xi_1(\mathcal{E}_1)$ is a minimal set of generators for $\initTerm(I)$;
+        \item $\xi_i(\mathcal{E}_i)$ is a minimal set of generators for $\initTerm(\ker \xi_{i-1})$ for $i \geq 2$.
+    \end{itemize}
+\end{definition}
 %With these properties of the Schreyer resolution, we can theoretically %compute the Schreyer resolution using the diagram below.
-
-
 
 %We could find the kernel of homomorphism $F_0 \to M$, $K_0$. Because 
 %$\coker(\varphi_1) = M$, $K_0 = \im \varphi_1$.
 
+\paragraph{}
 
-\textcolor{BrickRed}{How to practically find a free resolution: via the Schreyer frame}
+In this definition, we only trace how the leading monomials are changed in the resolution, where the homomorphisms $\xi_i(e_i) = \lm \varphi_i(e_i)$ for $e \in \mathcal{E}_1$. The restriction on the sets $\xi_i(\mathcal{E}_i)$ that it needs to be the minimal set such that $\xi_i(\mathcal{E}_i) = \initTerm(\ker \xi_{i-1})$ make sure that $\varphi_i(\mathcal{E}_i)$ forms a minimal Gröbner basis of $\ker \varphi_{i-1}$. From this construction, we could show that for any Schreyer resolution $\Phi$, $\initTerm (\Phi)$ is its corresponding Shreyer frame, and for any Shreyer frame $\Xi$, we could extend it to build a Shreyer resolution by including more information using the idea of syzygy.
 
-\textcolor{BrickRed}{Remind definition of colon ideal}
+With the definition of the Schreyer frame, we define some notations that would be useful when we prove the propositions later.
+
+Let $e \in \mathcal{E}_{i-1}$, then
+\begin{align}
+    \mathcal{B}_i &= \xi_{i}(\mathcal{E}_i)\\
+    \mathcal{E}_i(e) &= \{\epsilon \in \mathcal{E}_i \lvert \xi_{i}(\epsilon) = s \cdot e \text{, for some power product }s\}
+\end{align}
+
+%\textcolor{BrickRed}{How to practically find a free resolution: via the Schreyer frame}
+
+\subsection{Computing Schreyer Frame}
+
+\paragraph{}
+
+Thus, we know that if we have a Schreyer frame, we are able to extend it into a Schreyer resolution, but we still need the following definition to build a Shreyer frame from a free module.
+
+\begin{definition}[\textbf{Colon Ideal}]
+    Let $I, J$ be two ideals of commutative rings R, then the \textbf{colon ideal} $(I:J)$ is defined as
+    \begin{equation}
+        (I:J) = \{r \in R \; \lvert \;rJ \subseteq I\}
+    \end{equation}
+    If $p$ is an polynomial in $R$, then 
+    \begin{equation}
+        (I:p) = \{r \in R \; \lvert \; rp \in I\}
+    \end{equation}
+\end{definition}
+
+%\textcolor{BrickRed}{Remind definition of colon ideal}
+
+Then, the next Lemma is crucial for us to build up a Schreyer frame, since we need to minimally generate $\initTerm (\ker (\xi_{i-1}))$ to find $\mathcal{B}_i.$
 \begin{lemma}\label{lem:mingens}
     $in(ker\xi_i)$ is minimally generated by
     \begin{equation}
-        \bigcup_{e\in{\mathcal{E}}_{i-1}}{\bigcup_{j = 2}^{r}{mingens((in(J),t_1,\cdots,t_{j-1}):t_j)\cdot \epsilon_j}}
+        \bigcup_{e\in{\mathcal{E}}_{i-1}}{\bigcup_{j = 2}^{r}{\mingens((in(J),t_1,\cdots,t_{j-1}):t_j)\cdot \epsilon_j}}
     \end{equation}
-    where $\mathcal{E}_i(e) = \{\epsilon_1,\cdots,\epsilon_r\}$
-    \textcolor{BrickRed}{edit more}
+    where for each $e$ in the outer union, if  $\mathcal{E}_i(e) = \{\epsilon_1,\cdots,\epsilon_r\}$, then $\xi_i(\epsilon_j) = t_{j} \cdot e$, and $\mingens$ defines the subset of the minimal genreators of the considered monomial ideal which do not lie in $\initTerm(J)$.
+    %\textcolor{BrickRed}{edit more}
 \end{lemma}
 
-\begin{algorithm}[H]
-\caption{Resolution$[\bar{{\mathcal{C}}\sb{1}}]$}\label{alg:res}
-    \begin{algorithmic}
-        \State Input: an irredundant Gröbner basis $\bar{{\mathcal{C}}_{1}}$ of $I$, and an ordered union $\mathcal{B}$ of bases of all levels
-        \State Output: the set of Gröbner bases $\mathcal{C}_{1},\cdots,\mathcal{C}_{l}$, and the set of corresponding syzygies $\mathcal{H}_{1},\cdots,\mathcal{H}_{l}$
-        \newline
-        \State ${\mathcal{C}}_{i},{\mathcal{H}}_{i}:=\emptyset (1\leq i\leq l)$
-        \While{$\mathcal{B}\neq\emptyset$}
-            \State $m:=min\mathcal{B}$
-            \State $\mathcal{B}:=\mathcal{B}\backslash\{m\}$
-            \State $i:=lev(m)$
-            \If{$i=1$}
-                \State $g:=$ the element of $\bar{{\mathcal{C}}_{i}}$ s.t. $lm(g)=m$
-                \State ${\mathcal{C}}_{1}:={\mathcal{C}}_{1}\cup\{g\}$
-                \State ${\mathcal{H}}_{1}:={\mathcal{H}}_{i}\cup\{g\}$
-            \State else
-                \State $(f,g):=$ Reduce$[m,{\mathcal{C}}_{i-1}]$
-                \State ${\mathcal{C}}_{i}:={\mathcal{C}}_{i}\cup\{g\}$
-                \If{$f\neq 0$}
-                    \State ${\mathcal{C}}_{i-1}:={\mathcal{C}}_{i-1}\cup\{f\}$
-                    \State $\mathcal{B}:=\mathcal{B}\backslash\{lm(f)\}$
-                \State else
-                    \State ${\mathcal{H}}_{i}:={\mathcal{H}}_{i}\cup\{g\}$
-                \EndIf
-            \EndIf
-        \EndWhile
-        \State return ${\mathcal{C}}_{i},{\mathcal{H}}_{i}(1\leq i\leq l)$
-        \end{algorithmic}
-\end{algorithm}
-
-The Algorithm \verb+Reduce+ in \verb+Resolution+ is elaborated in the Algorithm \ref{alg:red}.
-
-\begin{algorithm}[H]
-\caption{Reduce[$t\cdot \epsilon,\mathcal{C}_{i-1}]$}\label{alg:red}
-    \begin{algorithmic}
-    \State $f:=t\cdot k$, where $\varphi_{i-1}(\epsilon) = k$
-    \State $g:=t\cdot \epsilon$
-    \While{$f \neq 0$ and $lm(f) \in in\langle\mathcal{C}_{i-1}\rangle$}
-        \State choose  $h \in \mathcal{C}_{i-1}$ s.t. $lm(h)\vert lm(f)$  \textbf{($h \neq f$ at the first iteration)}
-        \State $f := f - \tfrac{lc(f)lpp(f)}{lc(h)lpp(h)}h$
-        \State $g := g - \tfrac{lc(f)lpp(f)}{lc(h)lpp(h)}e$, where $\varphi_{i-1}(e) = h$
-    \EndWhile
-    \If{$f \neq 0$}
-        \State $g := g - e$, where $\varphi_{i-1}(e) = f$
-    \EndIf
-    \State return $f,g$
-    \end{algorithmic}
-\end{algorithm}
+The proof of this lemma could be referred to the proof of Lemma $3.5$ from the paper by La Scala and Stillman \cite{la_scala_strategies_1998}.
 
 \begin{example}
-    Let $K$ be a field of any characteristic and let the polynomial ring $S = K[x_1,\cdots,x_6]$ with the term order of \verb+DegRevLex+. Consider the graded module $M = S/I$, for 
+    Let $K$ be a field of any characteristic and let the polynomial ring $S = K[x_1,\cdots,x_6]$ with the term order of \verb+DegRevLex+. Consider the module $M = S/I$, for 
     \begin{equation}
         I = \langle x_2x_3,x_2x_4,x_5x_6,x_1x_2,x_4x_6,x_2x_5,x_1x_3x_5,x_1x_3x_6,x_3x_4x_5\rangle
     \end{equation} 
-    Using the algorithm \verb+Resolution+ for $char(K) \neq 2$ to the module $M$, find the minimal Schreyer resolution.
+    Using the algorithm \verb+Resolution+ for $char(K) \neq 2$ to the module $M$, consturct a Schreyer frame from the module $M$.
 \end{example}
 
 \paragraph{  }
@@ -642,7 +636,85 @@ After ordering it using the \verb+DegRevLex+, the last level basis is:
 
 Now, applying the Lemma \ref{lem:mingens} could not give us any basis from $\mathcal{B}_4$, then we know that we had found the complete Schreyer frame $\Xi$.
 
-Given the frame $\Xi$, we could implement the Algorithm \ref{alg:res} to construct a Schreyer resolution $\Phi$ corresponding to the frame. To start the algorithm, we should first identify the input by checking whether the first level of our frame gives a Gröbner basis. \textcolor{BrickRed}{Add more to explain the set of bases at the first level $\bar{\mathcal{C}_1}$ is a Gröbner basis}. Then we want to order the union of all bases we obtained in the frame $\Xi$.
+\subsection{Computing Schreyer Resolution}
+
+\paragraph{}
+
+Following our plan of getting a Schreyer resolution from a Schreyer frame, we prove the following proposition.
+
+\begin{prop}
+    If $\Xi$ is a Schreyer frame for free $R$-module $N$, then there exists a Schreyer resolution $\Phi$ such that $\Xi = \initTerm (\Phi)$.
+\end{prop}
+
+
+\begin{proof}
+    Since there $F_0$ is a free module with a ordering on it, then let $\mathcal{C}_1$ be a minimal Gröbner basis of the free module $I$, then $\initTerm(\mathcal{C}_1) = \initTerm(I)$ by the definition of the Gröbner basis. Hence, $\initTerm(\mathcal{C}_1) = \initTerm (\im \varphi_1)$, where $I = K_1 = \im \varphi_1$ referring to diagram \ref{eqn:16}. Then, $\initTerm(\mathcal{C}_1) = \initTerm (I) = \xi_1(\mathcal{E}_1) = \mathcal{B}_1$. Now, we know that for all element $m = t \cdot \epsilon \in \mathcal{B}_2$, we have $g = \varphi_1(\epsilon) \in \mathcal{C}_1$. Then using our knowledge of syzygy, we find a set of polynomials that reduces $\mathcal{B}_2$ to zero, which is the set $\mathcal{C}_2 = \varphi_2(\mathcal{E}_2)$. Since there is a term ordering on $\Xi$, the ordering on $F_1$ follows this ordering on the frame, then $\initTerm (\ker \xi_1) = \initTerm(\ker \varphi_1)$. Thus, $\mathcal{C}_2$ is a minimal Gröbner basis of $\ker (\varphi_1)$ and $\initTerm(\mathcal{C}_2) = \mathcal{B}_2$. By induction, we could construct $\mathcal{C}_i = \varphi_i(\mathcal{E}_i)$, and it is a minimal Gröbner basis of the $\ker(\varphi_{i-1})$, and $\initTerm (\varphi_i(\mathcal{E}_i)) = \initTerm(\mathcal{C}_1) = \mathcal{B_i} = \xi_i(\mathcal{E}_i)$. Thus, this gives a Schreyer resolution $\Phi$, and $\Xi = \initTerm (\Phi)$.
+\end{proof}
+
+Practically, we introduce a detailed algorithm discovered by La Scala and Stillman \cite{la_scala_strategies_1998}.
+
+\begin{algorithm}[H]
+\caption{Resolution$[\bar{{\mathcal{C}}\sb{1}}]$}\label{alg:res}
+    \begin{algorithmic}
+        \State Input: an irredundant Gröbner basis $\bar{{\mathcal{C}}_{1}}$ of $I$, and an ordered union $\mathcal{B}$ of bases of all levels
+        \State Output: the set of Gröbner bases $\mathcal{C}_{1},\cdots,\mathcal{C}_{l}$, and the set of corresponding syzygies $\mathcal{H}_{1},\cdots,\mathcal{H}_{l}$
+        \newline
+        \State ${\mathcal{C}}_{i},{\mathcal{H}}_{i}:=\emptyset (1\leq i\leq l)$
+        \While{$\mathcal{B}\neq\emptyset$}
+            \State $m:=min\mathcal{B}$
+            \State $\mathcal{B}:=\mathcal{B}\backslash\{m\}$
+            \State $i:=lev(m)$
+            \If{$i=1$}
+                \State $g:=$ the element of $\bar{{\mathcal{C}}_{i}}$ s.t. $lm(g)=m$
+                \State ${\mathcal{C}}_{1}:={\mathcal{C}}_{1}\cup\{g\}$
+                \State ${\mathcal{H}}_{1}:={\mathcal{H}}_{i}\cup\{g\}$
+            \State else
+                \State $(f,g):=$ Reduce$[m,{\mathcal{C}}_{i-1}]$
+                \State ${\mathcal{C}}_{i}:={\mathcal{C}}_{i}\cup\{g\}$
+                \If{$f\neq 0$}
+                    \State ${\mathcal{C}}_{i-1}:={\mathcal{C}}_{i-1}\cup\{f\}$
+                    \State $\mathcal{B}:=\mathcal{B}\backslash\{lm(f)\}$
+                \State else
+                    \State ${\mathcal{H}}_{i}:={\mathcal{H}}_{i}\cup\{g\}$
+                \EndIf
+            \EndIf
+        \EndWhile
+        \State return ${\mathcal{C}}_{i},{\mathcal{H}}_{i}(1\leq i\leq l)$
+        \end{algorithmic}
+\end{algorithm}
+
+\textcolor{BrickRed}{Talk about how to define the ordering on the resolution.}
+
+The Algorithm \verb+Reduce+ in \verb+Resolution+ is elaborated in the Algorithm \ref{alg:red}.
+
+\begin{algorithm}[H]
+\caption{Reduce[$t\cdot \epsilon,\mathcal{C}_{i-1}]$}\label{alg:red}
+    \begin{algorithmic}
+    \State $f:=t\cdot k$, where $\varphi_{i-1}(\epsilon) = k$
+    \State $g:=t\cdot \epsilon$
+    \While{$f \neq 0$ and $lm(f) \in in\langle\mathcal{C}_{i-1}\rangle$}
+        \State choose  $h \in \mathcal{C}_{i-1}$ s.t. $lm(h)\vert lm(f)$  \textbf{($h \neq f$ at the first iteration)}
+        \State $f := f - \tfrac{lc(f)lpp(f)}{lc(h)lpp(h)}h$
+        \State $g := g - \tfrac{lc(f)lpp(f)}{lc(h)lpp(h)}e$, where $\varphi_{i-1}(e) = h$
+    \EndWhile
+    \If{$f \neq 0$}
+        \State $g := g - e$, where $\varphi_{i-1}(e) = f$
+    \EndIf
+    \State return $f,g$
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{example}
+    Let $K$ be a field of any characteristic and let the polynomial ring $S = K[x_1,\cdots,x_6]$ with the term order of \verb+DegRevLex+. Consider the graded module $M = S/I$, for 
+    \begin{equation}
+        I = \langle x_2x_3,x_2x_4,x_5x_6,x_1x_2,x_4x_6,x_2x_5,x_1x_3x_5,x_1x_3x_6,x_3x_4x_5\rangle
+    \end{equation} 
+    Using the algorithm \verb+Resolution+ for $char(K) \neq 2$ to the module $M$, find the minimal Schreyer resolution.
+\end{example}
+
+\paragraph{}
+
+\textbf{Solution: }Given the frame $\Xi$, we could implement the Algorithm \ref{alg:res} to construct a Schreyer resolution $\Phi$ corresponding to the frame. To start the algorithm, we should first identify the input by checking whether the first level of our frame gives a Gröbner basis. \textcolor{BrickRed}{Add more to explain the set of bases at the first level $\bar{\mathcal{C}_1}$ is a Gröbner basis}. Then we want to order the union of all bases we obtained in the frame $\Xi$.
 
 \begin{equation}
     \begin{aligned}
@@ -685,6 +757,9 @@ Applying Algorithm \ref{alg:red} \verb+Reduce+ to $x_5e_{2,6}$ and the correspon
         \mathcal{H}_3 &= \{x_5e_{2,6}+e_{2,17}\}
     \end{aligned}
 \end{equation}
+
+\section{Minimalize Schreyer Resolution}
+
 \section{Conclusion}
 
 \paragraph{  }
